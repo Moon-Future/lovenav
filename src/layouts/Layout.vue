@@ -1,8 +1,8 @@
 <template>
   <div class='layout'>
     <!-- <img class="layout-bg" :src="`https://unsplash.it/1920/1080?random=${random}`" alt=""> -->
-    <el-button class="wallpaper-btn" type="primary" @click="change">切换壁纸</el-button>
-    <AppNav />
+    <!-- <el-button class="wallpaper-btn" type="primary" @click="change">切换壁纸</el-button> -->
+    <NavList />
     <div class="app-content">
       <router-view></router-view>
     </div>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import AppNav from '@/components/AppNav'
+import NavList from '@/components/NavList'
 import { ref } from 'vue'
 
 const random = ref(1)
@@ -32,6 +32,7 @@ const change = () => {
     bottom: 0;
     width: 100%;
     height: 100%;
+    object-fit: cover;
   }
   .wallpaper-btn {
     position: absolute;
@@ -42,7 +43,7 @@ const change = () => {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, calc(-50% - 30px));
     width: 80%;
     height: 80%;
     border-radius: 6px;
