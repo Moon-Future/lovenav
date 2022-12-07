@@ -77,6 +77,10 @@ button:focus-visible {
   height: 100%;
 }
 
+div {
+  box-sizing: border-box;
+}
+
 .page-container {
   height: 100%;
 }

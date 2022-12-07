@@ -1,8 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="content-container">
-      <BookmarksTree />
-    </div>
+    
   </div>
 </template>
 

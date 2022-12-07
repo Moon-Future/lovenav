@@ -1,8 +1,8 @@
 import axios from 'axios'
-import { Message } from 'view-ui-plus'
+import { ElMessage } from 'element-plus'
 
 const tip = (msg, type = 'info') => {
-  Message({
+  ElMessage({
     message: msg,
     duration: 1000,
     type,
@@ -82,8 +82,8 @@ instance.interceptors.request.use(
     // 每次发送请求之前判断 vuex 中是否存在 token
     // 如果存在，则统一在 http 请求的 header 都加上 token，这样后台根据 token 判断你的登录情况
     // 即使本地存在 token，也有可能 token 是过期的，所以在响应拦截器中要对返回状态进行判断
-    const token = store.state.token
-    token && (config.headers.Authorization = token)
+    // const token = store.state.token
+    // token && (config.headers.Authorization = token)
     return config
   },
   (error) => {
