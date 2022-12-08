@@ -4,13 +4,13 @@ import Layout from '@/layouts/Layout.vue'
 const routes = [
   {
     path: '/',
+    name: 'Home',
+    component: () => import(/* webpackChunkName: "home" */ '@/views/Home/Home.vue'),
+  },
+  {
+    path: '/',
     component: Layout,
     children: [
-      {
-        path: '',
-        name: 'Home',
-        component: () => import(/* webpackChunkName: "home" */ '@/views/Home/Home.vue'),
-      },
       {
         path: '/bookmark',
         name: 'Bookmark',

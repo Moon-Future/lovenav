@@ -1,11 +1,12 @@
 <template>
   <div id="app">
     <router-view/>
+    <NavList />
   </div>
 </template>
 
 <script setup>
-
+import NavList from '@/components/NavList'
 </script>
 
 <style scoped>

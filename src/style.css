@@ -77,7 +77,7 @@ button:focus-visible {
   height: 100%;
 }
 
-div {
+div, a {
   box-sizing: border-box;
 }
 

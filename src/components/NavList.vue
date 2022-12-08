@@ -1,62 +1,59 @@
 <template>
   <div class="nav-container">
-    <div class="glass">
-      <ul class="dock">
-        <li>😃</li>
-        <li>😊</li>
-        <li>😜</li>
-        <li>😍</li>
-        <li>🤩</li>
-        <li>🥳</li>
-        <li>🥶</li>
-      </ul>
-    </div>
+    <ul class="nav-list" @mouseleave="handleMouseleave">
+      <router-link :to="item.url" custom v-slot="{ navigate }" v-for="(item, index) in navList" :key="index">
+        <li @click="navigate" :class="{ 'nav-item': true }" :title="item.name" @mousemove.stop="handleMousemove">
+          <svg-icon :iconName="item.icon" />
+        </li>
+      </router-link>
+    </ul>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, reactive } from 'vue'
 
-onMounted(() => {
-  document.querySelectorAll('.dock li').forEach((li) => {
-    li.addEventListener('click', (e) => {
-      e.currentTarget.classList.add('loading')
-    })
+const navList = [
+  { name: '首页', url: '/', icon: 'icon-Home' },
+  { name: '书签栏', url: '/bookmark', icon: 'icon-shuqian1' },
+  { name: '导航', url: '/nav', icon: 'icon-daohang' },
+  { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
+  { name: '设置', url: '/setting', icon: 'icon-setting2' },
+  { name: '用户', url: '/user', icon: 'icon-User' },
+]
 
-    li.addEventListener('mousemove', (e) => {
-      let item = e.target
-      let itemRect = item.getBoundingClientRect()
-      let offset = Math.abs(e.clientX - itemRect.left) / itemRect.width
-
-      let prev = item.previousElementSibling || null
-      let next = item.nextElementSibling || null
-
-      let scale = 0.6
-
-      resetScale()
-
-      if (prev) {
-        prev.style.setProperty('--scale', 1 + scale * Math.abs(offset - 1))
-      }
-
-      item.style.setProperty('--scale', 1 + scale)
-
-      if (next) {
-        next.style.setProperty('--scale', 1 + scale * offset)
-      }
-    })
-  })
-
-  document.querySelector('.dock').addEventListener('mouseleave', (e) => {
-    resetScale()
-  })
-
-  function resetScale() {
-    document.querySelectorAll('.dock li').forEach((li) => {
-      li.style.setProperty('--scale', 1)
-    })
+const handleMousemove = (event) => {
+  const tagName = event.srcElement.tagName
+  let item = event.srcElement
+  if (tagName === 'use') {
+    item = event.srcElement.parentNode.parentNode
+  } else if (tagName === 'svg') {
+    item = event.srcElement.parentNode
   }
-})
+  let itemRect = item.getBoundingClientRect()
+  let offset = Math.abs(event.clientX - itemRect.left) / itemRect.width
+  let prev = item.previousElementSibling || null
+  let next = item.nextElementSibling || null
+  let scale = 0.6
+  resetScale()
+  if (prev) {
+    prev.style.setProperty('--scale', 1 + scale * Math.abs(offset - 1))
+  }
+  item.style.setProperty('--scale', 1 + scale)
+  if (next) {
+    next.style.setProperty('--scale', 1 + scale * offset)
+  }
+}
+
+const handleMouseleave = () => {
+  resetScale()
+}
+
+const resetScale = () => {
+  document.querySelectorAll('.nav-list li').forEach((li) => {
+    li.style.setProperty('--scale', 1)
+  })
+}
 </script>
 
 <style lang="less" scoped>
@@ -64,47 +61,33 @@ onMounted(() => {
   position: absolute;
   z-index: 100;
   bottom: 0;
-  width: 100%;
+  left: 50%;
+  transform: translate(-50%, 0);
   height: 60px;
-  background: #eee;
-  opacity: 0.9;
-  .glass {
-    width: 100%;
-    height: 8rem;
-    background: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+  .nav-list {
     display: flex;
     justify-content: center;
-  }
-
-  .dock {
-    --scale: 1;
-    list-style: none;
-    margin: 0;
+    margin: auto;
+    height: 100%;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    .nav-item {
+      --scale: 1;
+      padding: 0 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      // font-size: 40px;
+      cursor: pointer;
+      font-size: calc(40px * var(--scale));
+      position: relative;
+      top: calc((40px * var(--scale) - 40px) / 2 * -1);
+      transition: 500ms all ease-out;
+      &.loading {
+        animation: 1s loading ease-in infinite;
+      }
+    }
   }
-
-  .dock li {
-    font-size: calc(6rem * var(--scale));
-    padding: 0 0.5rem;
-    cursor: default;
-
-    position: relative;
-    top: calc((6rem * var(--scale) - 6rem) / 2 * -1);
-
-    transition: 15ms all ease-out;
-  }
-
-  .dock li.loading {
-    animation: 1s loading ease-in infinite;
-  }
-
   @keyframes loading {
     0%,
     100% {
