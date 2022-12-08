@@ -48,11 +48,12 @@ const handleChangeFile = (e) => {
 
 const walkBookmarkTree = (root) => {
   const result = [] // 深度优先遍历
-  let index = 1
+  let index = 0
   const walk = (node, list) => {
     const els = node.children
     if (els && els.length > 0) {
       for (let i = 0; i < els.length; i++) {
+        index++
         const item = els[i] // p标签或h3标签直接跳过
         if (item.tagName === 'P' || item.tagName === 'H3') {
           continue
@@ -74,7 +75,7 @@ const walkBookmarkTree = (root) => {
               label: item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : '',
               folder: true,
               children: [],
-              index,
+              id: index,
             }
             walk(els[i], child.children)
           } else {
@@ -85,6 +86,7 @@ const walkBookmarkTree = (root) => {
                 label: _item?.innerText,
                 url: _item?.href,
                 icon: _item?.getAttribute('ICON'),
+                id: index,
               }
             }
           }

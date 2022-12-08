@@ -1,7 +1,5 @@
 <template>
   <div class="layout">
-    <img class="layout-bg" :src="`https://unsplash.it/1920/1080?random=${random}`" alt="">
-    <el-button class="wallpaper-btn" type="primary" @click="change">切换壁纸</el-button>
     <div class="app-content">
       <div class="app-tools">
         <svg-icon iconName="icon-minus-circle-fill" @click="close" />
@@ -13,13 +11,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
-const random = ref(1)
-
-const change = () => {
-  random.value += 1
-}
 
 const close = () => {
   console.log('close')
@@ -29,21 +20,6 @@ const close = () => {
 <style lang="less" scoped>
 .layout {
   height: 100%;
-  .layout-bg {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .wallpaper-btn {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-  }
   .app-content {
     position: absolute;
     left: 50%;

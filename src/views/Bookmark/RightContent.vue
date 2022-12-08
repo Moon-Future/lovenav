@@ -122,6 +122,10 @@ const handleMore = () => {
         font-size: 26px;
         cursor: pointer;
         opacity: 0.5;
+        display: none;
+      }
+      &:hover .icon-more {
+        display: block;
       }
     }
     &.box-list {

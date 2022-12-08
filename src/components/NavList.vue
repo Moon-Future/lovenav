@@ -15,7 +15,7 @@ import { onMounted, reactive } from 'vue'
 
 const navList = [
   { name: '首页', url: '/', icon: 'icon-Home' },
-  { name: '书签栏', url: '/bookmark', icon: 'icon-shuqian1' },
+  { name: '书签栏', url: '/bookmark', icon: 'icon-mianxingshoucangjia' },
   { name: '导航', url: '/nav', icon: 'icon-daohang' },
   { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
   { name: '设置', url: '/setting', icon: 'icon-setting2' },

@@ -18,6 +18,11 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/clock',
+    name: 'Clock',
+    component: () => import(/* webpackChunkName: "clock" */ '@/views/Clock/Clock.vue'),
+  },
 ]
 
 const router = createRouter({
