@@ -3,6 +3,7 @@
     <el-tree
       v-if="bookmarkData.length"
       class="bookmark-tree"
+      ref="bookmarkTree"
       node-key="id"
       :data="bookmarkData"
       :props="defaultProps"
@@ -22,7 +23,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue'
+import { defineProps, defineEmits, ref, onMounted, watch, nextTick } from 'vue'
 
 const props = defineProps({
   bookmarkData: {
@@ -35,11 +36,18 @@ const props = defineProps({
 
 const emit = defineEmits(['nodeClick'])
 const expandedKeys = ref([228])
+const bookmarkTree = ref()
 
 const defaultProps = {
   children: 'children',
   label: 'label'
 }
+
+onMounted(() => {
+  nextTick(() => {
+    bookmarkTree.value.setCurrentKey(228)
+  })
+})
 
 const handleNodeClick = (treeNode) => {
   console.log('treeNode', treeNode)
@@ -47,6 +55,7 @@ const handleNodeClick = (treeNode) => {
     emit('nodeClick', { treeNode })
   }
 }
+
 </script>
 
 <style lang="less" scoped>
