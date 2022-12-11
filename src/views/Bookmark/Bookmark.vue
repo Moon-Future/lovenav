@@ -10,28 +10,76 @@
     </div>
     <div class="bookmark-content">
       <div class="bookmark-left">
-        <BookmarkTree :bookmarkData="bookmarkData" @nodeClick="handleNodeClick" />
+        <BookmarkTree
+          :bookmarkData="bookmarkData"
+          @nodeClick="handleNodeClick"
+          @openOperateMenu="openOperateMenu"
+          @hideOperateMenu="hideOperateMenu"
+          ref="bookmarkRef"
+        />
       </div>
       <div class="bookmark-right">
-        <RightContent :bookmarkData="selectData" @nodeClick="handleNodeClick" />
+        <RightContent :bookmarkData="selectData" :visiblePopover="visiblePopover" @nodeClick="handleNodeClick" @openOperateMenu="openOperateMenu" />
       </div>
     </div>
+    <el-popover
+      ref="popoverRef"
+      :visible="visiblePopover"
+      :virtual-ref="triggerRef"
+      :hide-after="0"
+      :popper-class="visiblePopover ? 'popper-wrapper' : 'popper-wrapper popper-hide'"
+      placement="bottom-start"
+      trigger="click"
+      virtual-triggering
+    >
+      <div class="menu-list">
+        <div class="menu-item" v-for="(item, index) in menuList" :key="index" @click="clickOperateItem(item.type)">{{ item.name }}</div>
+      </div>
+    </el-popover>
+    <EditModal :dialogVisible="dialogVisible" :bookmarkData="bookmarkData" :editData="editData" :editType="editType" @closeEditModal="closeEditModal" />
   </div>
 </template>
 
 <script setup>
 import BookmarkTree from '@/components/BookmarkTree'
 import RightContent from '@/views/Bookmark/RightContent'
-import { onMounted, ref } from 'vue'
+import EditModal from '@/views/Bookmark/EditModal'
+import { nextTick, onMounted, ref } from 'vue'
+import { nanoid } from 'nanoid'
+import { handleChromeFile } from '@/utils/handleData'
 
 const bookmarkData = ref([])
 const selectData = ref([])
+const bookmarkRef = ref()
+const triggerRef = ref()
+const popoverRef = ref()
+const visiblePopover = ref(false)
+const dialogVisible = ref(false)
+const editData = ref({})
+const editType = ref('')
+const menuList = ref([
+  { name: '修改', type: 'modify' },
+  { name: '移动', type: 'move' },
+  { name: '删除', type: 'remove' },
+])
 
 onMounted(() => {
   const localData = localStorage.getItem('bookmarkData')
+  const chromeFile = localStorage.getItem('chromeFile')
   if (localData) {
     bookmarkData.value = JSON.parse(localData)
   }
+  if (chromeFile) {
+    handleChromeFile(chromeFile)
+  }
+
+  window.addEventListener('click', (e) => {
+    const path = e.path
+    for (let i = 0, len = path.length; i < len; i++) {
+      if (path[i] === popoverRef.value.popperRef.contentRef) return
+    }
+    hideOperateMenu()
+  })
 })
 
 const handleChangeFile = (e) => {
@@ -40,20 +88,20 @@ const handleChangeFile = (e) => {
   reader.onload = (event) => {
     const doms = document.createElement('html')
     doms.innerHTML = event.target.result
-    const formDatas = walkBookmarkTree(doms)
+    // const formDatas = walkBookmarkTree(doms)
+    const formDatas = handleChromeFile(event.target.result)
     bookmarkData.value = [formDatas]
     localStorage.setItem('bookmarkData', JSON.stringify([formDatas]))
+    localStorage.setItem('chromeFile', event.target.result)
   }
 }
 
 const walkBookmarkTree = (root) => {
   const result = [] // 深度优先遍历
-  let index = 0
   const walk = (node, list) => {
     const els = node.children
     if (els && els.length > 0) {
       for (let i = 0; i < els.length; i++) {
-        index++
         const item = els[i] // p标签或h3标签直接跳过
         if (item.tagName === 'P' || item.tagName === 'H3') {
           continue
@@ -75,7 +123,7 @@ const walkBookmarkTree = (root) => {
               label: item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : '',
               folder: true,
               children: [],
-              id: index,
+              id: nanoid(10),
             }
             walk(els[i], child.children)
           } else {
@@ -86,7 +134,7 @@ const walkBookmarkTree = (root) => {
                 label: _item?.innerText,
                 url: _item?.href,
                 icon: _item?.getAttribute('ICON'),
-                id: index,
+                id: nanoid(10),
               }
             }
           }
@@ -107,9 +155,32 @@ const walkBookmarkTree = (root) => {
   return myBookmark
 }
 
-const handleNodeClick = ({ treeNode }) => {
+const handleNodeClick = ({ treeNode, type }) => {
   selectData.value = treeNode.children || []
+  bookmarkRef.value.handleExpandedKeys(treeNode.id, type)
 }
+
+const openOperateMenu = ({ ref, data }) => {
+  triggerRef.value = ref
+  visiblePopover.value = true
+  editData.value = data
+}
+
+const hideOperateMenu = () => {
+  triggerRef.value = null
+  visiblePopover.value = false
+}
+
+const clickOperateItem = (type) => {
+  visiblePopover.value = false
+  dialogVisible.value = true
+  editType.value = type
+}
+
+const closeEditModal = () => {
+  dialogVisible.value = false
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -117,10 +188,11 @@ const handleNodeClick = ({ treeNode }) => {
   height: 100%;
   .header-container {
     height: 48px;
-    border: 1px solid #eee;
+    border-bottom: 1px solid #eee;
     padding: 20px;
     display: flex;
     align-items: center;
+    border-radius: 6px 6px 0 0;
     .upload-file {
       // position: absolute;
       // bottom: 0;
@@ -128,7 +200,6 @@ const handleNodeClick = ({ treeNode }) => {
       // height: 28px;
       display: flex;
       padding: 10px;
-      border-top: 1px solid #eee;
       font-size: 14px;
     }
   }
@@ -149,5 +220,26 @@ const handleNodeClick = ({ treeNode }) => {
     height: 100%;
     overflow: hidden;
   }
+}
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  .menu-item {
+    padding: 5px 10px;
+    cursor: pointer;
+    &:hover {
+      background: #ecf5ff;
+    }
+  }
+}
+</style>
+<style>
+.popper-wrapper {
+  width: 100px !important;
+  min-width: 100px !important;
+  padding: 5px 0 !important;
+}
+.popper-hide {
+  top: -1000px !important;
 }
 </style>

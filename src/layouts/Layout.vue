@@ -11,7 +11,6 @@
 </template>
 
 <script setup>
-
 const close = () => {
   console.log('close')
 }
@@ -19,14 +18,13 @@ const close = () => {
 
 <style lang="less" scoped>
 .layout {
-  height: 100%;
+  height: calc(100vh - 60px);
+  display: flex;
   .app-content {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, calc(-50% - 30px));
+    position: relative;
+    margin: auto;
     width: 80%;
-    height: calc(100% - 100px);
+    height: calc(100vh - 100px);
     border-radius: 6px;
     background: #fff;
     // border: 1px solid hsla(0,0%,100%,.18);

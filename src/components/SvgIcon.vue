@@ -38,5 +38,6 @@ const svgClass = computed(() => {
   position: relative;
   /* fill: currentColor; */
   vertical-align: -2px;
+  outline: none;
 }
 </style>
