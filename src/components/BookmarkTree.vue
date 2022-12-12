@@ -9,6 +9,7 @@
       :props="defaultProps"
       :default-expanded-keys="expandedKeys"
       :expand-on-click-node="false"
+      :auto-expand-parent="false"
       highlight-current
       @node-click="handleNodeClick"
       @node-expand="handleNodeExpand"
@@ -105,6 +106,7 @@ defineExpose({
   height: 100%;
   padding: 10px;
   /deep/ .bookmark-tree {
+    user-select: none;
     > .el-tree-node {
       display: inline-block;
       min-width: 100%;

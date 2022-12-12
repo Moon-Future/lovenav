@@ -4,51 +4,11 @@
     <svg-icon class="icon-list" iconName="icon-liebiao1" :color="listType === 'box' ? '#409eff' : '#8c8c8c'" @click="changeType('box')" />
   </div>
   <el-scrollbar class="scroll-wrapper" :class="{ disabled: visiblePopover }">
-    <!-- <div class="row-list" :class="{ 'box-list': listType === 'box' }">
-      <template v-for="(item, index) in bookmarkData" :key="index">
-        <div
-          class="row-item"
-          :class="{ 'box-item': listType === 'box', 'box-item-margin': (index + 2) % 3 === 0 }"
-          @click="handleClick(item)"
-          v-if="item.folder"
-        >
-          <svg-icon class="icon" iconName="icon-folder" v-if="item.folder" />
-          <img class="icon" :src="item.icon" alt="" v-else-if="item.icon" />
-          <svg-icon class="icon" iconName="icon-website" v-else />
-          <span class="label" :title="item.label">{{ item.label }}</span>
-          <svg-icon
-            class="icon-more"
-            :class="{ 'icon-more-show': moreShow === item.id && visiblePopover }"
-            iconName="icon-more"
-            :ref="(ref) => (refMap[item.id] = ref)"
-            @click.stop="handleMore(item)"
-          />
-        </div>
-        <a
-          class="row-item"
-          :class="{ 'box-item': listType === 'box', 'box-item-margin': (index + 2) % 3 === 0 }"
-          :href="item.url"
-          target="_blank"
-          v-else
-        >
-          <svg-icon class="icon" iconName="icon-folder" v-if="item.folder" />
-          <img class="icon" :src="item.icon" alt="" v-else-if="item.icon" />
-          <svg-icon class="icon" iconName="icon-website" v-else />
-          <span class="label" :title="item.label">{{ item.label }}</span>
-          <svg-icon
-            class="icon-more"
-            :class="{ 'icon-more-show': moreShow === item.id && visiblePopover }"
-            iconName="icon-more"
-            :ref="(ref) => (refMap[item.id] = ref)"
-            @click.stop.prevent="handleMore(item)"
-          />
-        </a>
-      </template>
-    </div> -->
     <draggable
       class="row-list"
       :class="{ 'box-list': listType === 'box' }"
       :list="bookmarkData"
+      delay="200"
       group="people"
       item-key="id"
       ghost-class="ghost-class"
@@ -62,6 +22,7 @@
         <div
           class="row-item"
           :class="{ 'box-item': listType === 'box', 'box-item-margin': (index + 2) % 3 === 0 }"
+          filter=".unmover"
           @click="handleClick(element)"
           v-if="element.folder"
         >

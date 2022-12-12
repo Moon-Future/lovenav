@@ -1,11 +1,15 @@
 <template>
   <el-dialog class="editmodal-container" :model-value="dialogVisible" :title="title" width="600px" @close="handleClose">
-    <el-form :model="form" v-if="editType !== 'move'">
-      <el-form-item label="名称" :label-width="formLabelWidth">
+    <el-form ref="formRef" :model="form" :rules="rules" v-if="editType !== 'move'">
+      <el-form-item label="名称" prop="name" :label-width="formLabelWidth">
         <el-input v-model="form.name" autocomplete="off" />
       </el-form-item>
-      <el-form-item label="网址" :label-width="formLabelWidth" v-if="!editData.folder">
+      <el-form-item label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder">
         <el-input v-model="form.url" autocomplete="off" />
+      </el-form-item>
+      <el-form-item class="form-icon" label="图标" :label-width="formLabelWidth" v-if="!editData.folder">
+        <el-input v-model="form.icon" autocomplete="off" />
+        <img :src="form.icon" alt="" />
       </el-form-item>
     </el-form>
     <el-scrollbar class="edit-scroll" v-if="editType === 'move' || editType === 'add'">
@@ -23,8 +27,8 @@
     </el-scrollbar>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false"> 保存 </el-button>
+        <el-button @click="handleClose">取消</el-button>
+        <el-button type="primary" @click="handleSave"> 保存 </el-button>
       </span>
     </template>
   </el-dialog>
@@ -58,31 +62,66 @@ const defaultProps = {
   label: 'label',
 }
 
-const emit = defineEmits(['closeEditModal'])
+const emit = defineEmits(['closeEditModal', 'saveEditModal'])
 const formLabelWidth = '60px'
 const title = ref('')
-const form = ref({ name: '', url: '', folder: '' })
+const form = ref({ name: '', url: '', icon: '', folder: '' })
+const formRef = ref()
+
+const rules = {
+  name: [
+    { required: true, message: '请输入名称', trigger: 'blur' },
+    { min: 1, max: 1000, message: '请输入1~1000个字符', trigger: 'blur' },
+  ],
+  url: [
+    { required: true, message: '请输入网址', trigger: 'blur' },
+    { min: 1, max: 1000, message: '请输入1~1000个字符', trigger: 'blur' },
+  ],
+}
 
 const handleClose = () => {
   console.log('handleClose')
   emit('closeEditModal')
 }
 
+const handleSave = () => {
+  formRef.value.validate((valid, fields) => {
+    if (valid) {
+      emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType })
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
 watch(
   () => [props.editData, props.editType],
   (newValue) => {
     const [editData, editType] = newValue
-    form.value = { name: editData.label, url: editData.url || '', folder: !!editData.folder }
+    form.value = { name: editData.label, url: editData.url || '', icon: editData.icon, folder: !!editData.folder }
     if (editData.folder) {
       title.value = editType === 'move' ? '移动文件夹' : '重命名文件夹'
     } else {
-      title.value = editType === 'add' ? '添加书签' : (editType === 'move' ? '移动书签' : '修改书签')
+      title.value = editType === 'add' ? '添加书签' : editType === 'move' ? '移动书签' : '修改书签'
     }
+    formRef.value && formRef.value.resetFields()
   }
 )
 </script>
 
 <style lang="less" scoped>
+.editmodal-container {
+  .form-icon {
+    .el-input {
+      width: 90%;
+      margin-right: 10px;
+    }
+    img {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
 .edit-scroll {
   height: 300px;
   border: 1px solid #eee;

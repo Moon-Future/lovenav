@@ -36,7 +36,14 @@
         <div class="menu-item" v-for="(item, index) in menuList" :key="index" @click="clickOperateItem(item.type)">{{ item.name }}</div>
       </div>
     </el-popover>
-    <EditModal :dialogVisible="dialogVisible" :bookmarkData="bookmarkData" :editData="editData" :editType="editType" @closeEditModal="closeEditModal" />
+    <EditModal
+      :dialogVisible="dialogVisible"
+      :bookmarkData="bookmarkData"
+      :editData="editData"
+      :editType="editType"
+      @closeEditModal="closeEditModal"
+      @saveEditModal="saveEditModal"
+    />
   </div>
 </template>
 
@@ -44,7 +51,7 @@
 import BookmarkTree from '@/components/BookmarkTree'
 import RightContent from '@/views/Bookmark/RightContent'
 import EditModal from '@/views/Bookmark/EditModal'
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { nanoid } from 'nanoid'
 import { handleChromeFile } from '@/utils/handleData'
 
@@ -72,15 +79,20 @@ onMounted(() => {
   if (chromeFile) {
     handleChromeFile(chromeFile)
   }
-
-  window.addEventListener('click', (e) => {
-    const path = e.path
-    for (let i = 0, len = path.length; i < len; i++) {
-      if (path[i] === popoverRef.value.popperRef.contentRef) return
-    }
-    hideOperateMenu()
-  })
+  window.addEventListener('click', clickListener)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('click', clickListener)
+})
+
+const clickListener = (e) => {
+  const path = e.path
+  for (let i = 0, len = path.length; i < len; i++) {
+    if (path[i] === popoverRef.value.popperRef.contentRef) return
+  }
+  hideOperateMenu()
+}
 
 const handleChangeFile = (e) => {
   const reader = new FileReader()
@@ -164,6 +176,7 @@ const openOperateMenu = ({ ref, data }) => {
   triggerRef.value = ref
   visiblePopover.value = true
   editData.value = data
+  editType.value = ''
 }
 
 const hideOperateMenu = () => {
@@ -181,6 +194,11 @@ const closeEditModal = () => {
   dialogVisible.value = false
 }
 
+const saveEditModal = ({ form, editData, editType }) => {
+  console.log(form, editData, editType)
+  dialogVisible.value = false
+  editData.label = form.name
+}
 </script>
 
 <style lang="less" scoped>
