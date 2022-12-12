@@ -63,7 +63,7 @@ const errorHandle = (status, message) => {
 let instance = axios.create({ timeout: 1000 * 12 })
 let CancelToken = axios.CancelToken
 let pending = {}
-instance.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded'
+instance.defaults.headers.post['Content-Type'] = 'application/json; charset=utf-8'
 
 function removePending(key, isRequest = false) {
   if (pending[key] && isRequest) {

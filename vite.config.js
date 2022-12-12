@@ -20,5 +20,14 @@ export default defineConfig(async (command, mode) => {
       },
       extensions: ['.js', '.vue']
     },
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:5555/api',
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/api/, '')
+        },
+      },
+    },
   }
 })

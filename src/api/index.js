@@ -1,13 +1,18 @@
 import axios from './axios'
+const HOST = import.meta.env.MODE === 'development' ? '' : 'https://wxproject.cl8023.com'
 
 const params = [
-  { name: 'getWallparper', url: 'https://unsplash.it/1920/1080?random', method: 'get' }
+  { name: 'getWallparper', url: 'https://unsplash.it/1920/1080?random', method: 'get', host: 'self' },
+
+  { name: 'importBookmark', url: '/api/bookmark/importBookmark/', method: 'post' },
+  { name: 'addBookmark', url: '/api/bookmark/addBookmark/', method: 'post' },
 ]
 
 const api = {}
 
 params.forEach(ele => {
   api[ele.name] = (data) => {
+    const url = data.host === 'self' ? data.url : `${HOST}${data.url}`
     return ele.method === 'get' ? axios.get(ele.url, { params: data }) : axios.post(ele.url, data)
   }
 })

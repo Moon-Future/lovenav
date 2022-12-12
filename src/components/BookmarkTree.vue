@@ -18,7 +18,7 @@
     >
       <template v-slot="{ node, data }">
         <div class="tree-node-item" :ref="(ref) => (refMap[data.id + '_left'] = ref)">
-          <svg-icon :iconName=" expandedKeys.includes(data.id) ? 'icon-opened_folder' : 'icon-folder'" v-if="data.folder" />
+          <svg-icon :iconName="expandedKeys.includes(data.id) ? 'icon-opened_folder' : 'icon-folder'" v-if="data.folder" />
           <img :src="data.icon" alt="" v-else-if="data.icon" />
           <svg-icon iconName="icon-website" v-else />
           <span class="tree-label" :title="node.label" v-if="data.folder">{{ node.label }}</span>
@@ -51,12 +51,22 @@ const defaultProps = {
   label: 'label',
 }
 
-onMounted(() => {
-  nextTick(() => {
-    handleNodeExpand(props.bookmarkData[0])
-    handleNodeClick(props.bookmarkData[0])
-  })
-})
+// onMounted(() => {
+//   nextTick(() => {
+//     handleNodeExpand(props.bookmarkData[0])
+//     handleNodeClick(props.bookmarkData[0])
+//   })
+// })
+
+watch(
+  () => props.bookmarkData,
+  (newValue) => {
+    nextTick(() => {
+      handleNodeExpand(newValue[0])
+    handleNodeClick(newValue[0])
+    })
+  }
+)
 
 const handleNodeClick = (treeNode) => {
   emit('hideOperateMenu')
@@ -111,7 +121,7 @@ defineExpose({
       display: inline-block;
       min-width: 100%;
     }
-    .is-current>.el-tree-node__content {
+    .is-current > .el-tree-node__content {
       background-color: #d9ecff;
     }
     .tree-node-item {
