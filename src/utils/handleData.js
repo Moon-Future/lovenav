@@ -2,77 +2,77 @@ import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
 
 // 深度优先遍历
-const walkChromeDomTree = (root) => {
-  const result = [] 
-  const saveData = [] // 存入数据库数据
-  const walk = (node, list, folderList, parentId) => {
-    const els = node.children
-    if (els && els.length > 0) {
-      for (let i = 0; i < els.length; i++) {
-        const item = els[i]
-        // p标签或h3标签直接跳过
-        if (item.tagName === 'P' || item.tagName === 'H3') {
-          continue
-        }
-        // 文件夹不用创建元素
-        if (item.tagName === 'DL') {
-          walk(item, list, folderList, parentId)
-        } else {
-          // DT节点
-          let child = null // 判断是否是文件夹
-          const children = item.children
-          let isDir = false
-          for (let j = 0; j < children.length; j++) {
-            if (children[j].tagName === 'H3' || children[j].tagName === 'DL') {
-              isDir = true
-              break
-            }
-          } // 文件夹
-          const id = nanoid(10)
-          if (isDir) {
-            child = {
-              label: item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : '',
-              folder: true,
-              children: [],
-              folderChildren: [],
-              id: id,
-              parentId: parentId,
-            }
-            walk(item, child.children, child.folderChildren, id)
-            folderList.push(child)
-          } else {
-            // 书签
-            const _item = item.querySelector('a')
-            if (_item) {
-              child = {
-                label: _item?.innerText,
-                url: _item?.href,
-                icon: _item?.getAttribute('ICON'),
-                id: id,
-                parentId: parentId,
-              }
-            }
-          }
-          if (child) {
-            list.push(child)
-            saveData.push({ id, parentId, label: child.label, folder: isDir, parentId, url: child.url || '', icon: child.icon })
-          }
-        }
-      }
-    }
-  }
-  walk(root, result, [], '')
-  console.log(result)
-  const bookmark = result[0].children
-  const myBookmark = bookmark[0]
-  myBookmark.parentId = ''
-  myBookmark.children = myBookmark.children || []
-  for (let i = 1; i < bookmark.length; i++) {
-    bookmark[i].parentId = myBookmark.id
-    myBookmark.children.push(bookmark[i])
-  }
-  return myBookmark
-}
+// const walkChromeDomTree = (root) => {
+//   const result = [] 
+//   const saveData = [] // 存入数据库数据
+//   const walk = (node, list, folderList, parentId) => {
+//     const els = node.children
+//     if (els && els.length > 0) {
+//       for (let i = 0; i < els.length; i++) {
+//         const item = els[i]
+//         // p标签或h3标签直接跳过
+//         if (item.tagName === 'P' || item.tagName === 'H3') {
+//           continue
+//         }
+//         // 文件夹不用创建元素
+//         if (item.tagName === 'DL') {
+//           walk(item, list, folderList, parentId)
+//         } else {
+//           // DT节点
+//           let child = null // 判断是否是文件夹
+//           const children = item.children
+//           let isDir = false
+//           for (let j = 0; j < children.length; j++) {
+//             if (children[j].tagName === 'H3' || children[j].tagName === 'DL') {
+//               isDir = true
+//               break
+//             }
+//           } // 文件夹
+//           const id = nanoid(10)
+//           if (isDir) {
+//             child = {
+//               label: item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : '',
+//               folder: true,
+//               children: [],
+//               folderChildren: [],
+//               id: id,
+//               parentId: parentId,
+//             }
+//             walk(item, child.children, child.folderChildren, id)
+//             folderList.push(child)
+//           } else {
+//             // 书签
+//             const _item = item.querySelector('a')
+//             if (_item) {
+//               child = {
+//                 label: _item?.innerText,
+//                 url: _item?.href,
+//                 icon: _item?.getAttribute('ICON'),
+//                 id: id,
+//                 parentId: parentId,
+//               }
+//             }
+//           }
+//           if (child) {
+//             list.push(child)
+//             saveData.push({ id, parentId, label: child.label, folder: isDir, parentId, url: child.url || '', icon: child.icon })
+//           }
+//         }
+//       }
+//     }
+//   }
+//   walk(root, result, [], '')
+//   console.log(result)
+//   const bookmark = result[0].children
+//   const myBookmark = bookmark[0]
+//   myBookmark.parentId = ''
+//   myBookmark.children = myBookmark.children || []
+//   for (let i = 1; i < bookmark.length; i++) {
+//     bookmark[i].parentId = myBookmark.id
+//     myBookmark.children.push(bookmark[i])
+//   }
+//   return myBookmark
+// }
 
 const emojiReg = /[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF][\u200D|\uFE0F]|[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF]|[0-9|*|#]\uFE0F\u20E3|[0-9|#]\u20E3|[\u203C-\u3299]\uFE0F\u200D|[\u203C-\u3299]\uFE0F|[\u2122-\u2B55]|\u303D|[\A9|\AE]\u3030|\uA9|\uAE|\u3030/gi;
 
@@ -152,11 +152,13 @@ const bfsDChromeDomTree = (root) => {
       }
     }
   }
+  const myBookmark = []
+  if (result.length === 0 || result[0].children.length === 0) return
   const children = result[0].children
   const firstObj = children[0]
-  const myBookmark = []
   firstObj.parentId = ''
   myBookmark.push(firstObj)
+  saveData[firstObj.id].parentId = ''
   const id = nanoid(10)
   if (children.length > 1) {
     const secondObj = { label: '其他书签', folder: true, id, parentId: '', sort: firstObj.sort + 1, children: [], folderChildren: [] }

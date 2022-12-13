@@ -83,6 +83,7 @@ onMounted(() => {
     handleChromeFile(chromeFile)
   }
   window.addEventListener('click', clickListener)
+  getBookmark()
 })
 
 onUnmounted(() => {
@@ -169,6 +170,7 @@ const saveEditModal = async ({ form, editData, editType }) => {
   }
 }
 
+// 删除书签
 const removeBookmark = () => {
   ElMessageBox.confirm('数据删除不可恢复，确认是否删除？', '警告', {
     confirmButtonText: '删除',
@@ -177,7 +179,7 @@ const removeBookmark = () => {
   })
     .then(async () => {
       const deleteData = editData.value
-      await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder }  })
+      await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
     })
     .catch(() => {})
 }
@@ -190,6 +192,61 @@ const saveImportData = async (data) => {
   } catch (e) {
     console.log(e)
   }
+}
+
+// 获取书签树
+const getBookmark = async () => {
+  try {
+    const res = await globalProperties.$api.getBookmark({ userId: '' })
+    console.log('getBookmark', res)
+    handleBookmarkData(res.data)
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+const handleBookmarkData = (data) => {
+  const dataMap = {}
+  const treeData = []
+  for (let i = 0, len = data.length; i < len; i++) {
+    const item = data[i]
+    const { id, web_name, web_url, icon_url, parent_id, folder_status, sort_number } = item
+    const node = { id, label: web_name, url: web_url, icon: icon_url, parent: parent_id, folder: !!folder_status, sort: sort_number }
+    if (dataMap[id]) {
+      // 如果先循环到子级是创建了对象
+      dataMap[id] = { ...node, ...dataMap[id] }
+    } else {
+      dataMap[id] = node
+      if (folder_status) {
+        node.children = []
+        node.folderChildren = []
+      }
+    }
+    if (!parent_id) {
+      // 顶层节点
+      treeData.push(dataMap[id])
+    } else {
+      // 先循环到子级，创建父级对象
+      if (!dataMap[parent_id]) {
+        dataMap[parent_id] = { children: [], folderChildren: [] }
+      }
+      dataMap[parent_id].children.push(dataMap[id])
+      folder_status && dataMap[parent_id].folderChildren.push(dataMap[id])
+    }
+  }
+  for (let key in dataMap) {
+    const item = dataMap[key]
+    if (item.children) {
+      item.children.sort((a, b) => {
+        return a.sort - b.sort
+      })
+      item.folderChildren.sort((a, b) => {
+        return a.sort - b.sort
+      })
+    }
+  }
+  console.log('treeData', treeData, bookmarkData.value)
+  // bookmarkData.value = treeData
 }
 </script>
 

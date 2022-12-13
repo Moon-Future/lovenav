@@ -98,7 +98,7 @@ instance.interceptors.response.use(
     // 否则的话抛出错误
     if (res.status === 200) {
       res.data.message && tip(res.data.message, 'success')
-      return Promise.resolve(res)
+      return Promise.resolve(res.data)
     } else {
       return Promise.reject(res)
     }
