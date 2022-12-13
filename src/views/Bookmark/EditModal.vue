@@ -125,7 +125,7 @@ watch(
 .edit-scroll {
   height: 300px;
   border: 1px solid #eee;
-  /deep/ .bookmark-tree {
+  :deep(.bookmark-tree) {
     > .el-tree-node {
       display: inline-block;
       min-width: 100%;

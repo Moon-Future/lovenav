@@ -74,13 +74,14 @@ const walkChromeDomTree = (root) => {
   return myBookmark
 }
 
+const emojiReg = /[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF][\u200D|\uFE0F]|[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF]|[0-9|*|#]\uFE0F\u20E3|[0-9|#]\u20E3|[\u203C-\u3299]\uFE0F\u200D|[\u203C-\u3299]\uFE0F|[\u2122-\u2B55]|\u303D|[\A9|\AE]\u3030|\uA9|\uAE|\u3030/gi;
+
 // 广度优先遍历
 const bfsDChromeDomTree = (root) => {
   const result = []
   const queue = []
   const saveData = {} // 存入数据库数据
   const createTime = dayjs().format('YYYY-MM-DD HH:mm:ss')
-  const emojiReg = /[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF][\u200D|\uFE0F]|[\uD83C|\uD83D|\uD83E][\uDC00-\uDFFF]|[0-9|*|#]\uFE0F\u20E3|[0-9|#]\u20E3|[\u203C-\u3299]\uFE0F\u200D|[\u203C-\u3299]\uFE0F|[\u2122-\u2B55]|\u303D|[\A9|\AE]\u3030|\uA9|\uAE|\u3030/gi;
   queue.push({ node: root, data: result, folderData: [], parentId: '' })
   while (queue.length !== 0) {
     let len = queue.length
@@ -114,8 +115,10 @@ const bfsDChromeDomTree = (root) => {
           const id = nanoid(10)
           if (isDir) {
             child = {
-              label: (item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : '').replace(emojiReg, ''),
+              label: (item.tagName === 'DT' ? (item.querySelector('h3') ? item.querySelector('h3').innerText : '') : ''),
               folder: true,
+              url: '',
+              icon: '',
               children: [],
               folderChildren: [],
               id: id,
@@ -129,7 +132,8 @@ const bfsDChromeDomTree = (root) => {
             const _item = item.querySelector('a')
             if (_item) {
               child = {
-                label: _item?.innerText.replace(emojiReg, ''),
+                label: _item?.innerText,
+                folder: false,
                 url: _item?.href,
                 icon: _item?.getAttribute('ICON'),
                 id: id,

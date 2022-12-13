@@ -55,6 +55,7 @@ import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { nanoid } from 'nanoid'
 import { handleChromeFile } from '@/utils/handleData'
 import { getGlobalProperties } from '@/utils/index'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const bookmarkData = ref([])
 const selectData = ref([])
@@ -132,8 +133,12 @@ const hideOperateMenu = () => {
 // 点击操作菜单选项
 const clickOperateItem = (type) => {
   visiblePopover.value = false
-  dialogVisible.value = true
-  editType.value = type
+  if (type === 'remove') {
+    removeBookmark()
+  } else {
+    dialogVisible.value = true
+    editType.value = type
+  }
 }
 
 // 关闭修改弹出框
@@ -142,10 +147,39 @@ const closeEditModal = () => {
 }
 
 // 保存修改数据
-const saveEditModal = ({ form, editData, editType }) => {
+const saveEditModal = async ({ form, editData, editType }) => {
   console.log(form, editData, editType)
   dialogVisible.value = false
-  editData.label = form.name
+  if (form.name === editData.label && form.url === editData.url && form.icon === editData.icon) {
+    console.log('not modify')
+    return
+  }
+  try {
+    editData.label = form.name
+    const saveData = {
+      id: editData.id,
+      name: form.name,
+      url: form.url,
+      icon: form.icon,
+      folder: editData.folder,
+    }
+    const res = await globalProperties.$api.modifyBookmark({ bookmark: saveData })
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+const removeBookmark = () => {
+  ElMessageBox.confirm('数据删除不可恢复，确认是否删除？', '警告', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      const deleteData = editData.value
+      await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder }  })
+    })
+    .catch(() => {})
 }
 
 // 提交书签导入数据

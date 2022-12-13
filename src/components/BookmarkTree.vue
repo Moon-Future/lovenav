@@ -115,7 +115,7 @@ defineExpose({
   min-width: 250px;
   height: 100%;
   padding: 10px;
-  /deep/ .bookmark-tree {
+  :deep(.bookmark-tree) {
     user-select: none;
     > .el-tree-node {
       display: inline-block;

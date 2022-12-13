@@ -5,12 +5,14 @@ const params = [
   { name: 'getWallparper', url: 'https://unsplash.it/1920/1080?random', method: 'get', host: 'self' },
 
   { name: 'importBookmark', url: '/api/bookmark/importBookmark/', method: 'post' },
+  { name: 'modifyBookmark', url: '/api/bookmark/modifyBookmark/', method: 'post' },
+  { name: 'removeBookmark', url: '/api/bookmark/removeBookmark/', method: 'post' },
   { name: 'addBookmark', url: '/api/bookmark/addBookmark/', method: 'post' },
 ]
 
 const api = {}
 
-params.forEach(ele => {
+params.forEach((ele) => {
   api[ele.name] = (data) => {
     const url = data.host === 'self' ? data.url : `${HOST}${data.url}`
     return ele.method === 'get' ? axios.get(ele.url, { params: data }) : axios.post(ele.url, data)

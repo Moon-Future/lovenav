@@ -126,7 +126,7 @@ const onDargEnd = () => {
 .scroll-wrapper {
   height: calc(100% - 40px);
   &.disabled {
-    /deep/ .el-scrollbar__wrap {
+    :deep(.el-scrollbar__wrap) {
       overflow: hidden;
     }
   }
