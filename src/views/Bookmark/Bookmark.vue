@@ -1,12 +1,8 @@
 <template>
   <div class="bookmark-container">
     <div class="header-container">
-      <span>书签栏</span>
-      <el-upload ref="upload" class="upload-file" action="" :limit="1" :show-file-list="false" :on-change="handleChangeFile" :auto-upload="false">
-        <template #trigger>
-          <span>导入书签</span>
-        </template>
-      </el-upload>
+      <span class="header-title">书签栏</span>
+      <span class="header-desc">书签，只用一个就够了</span>
     </div>
     <div class="bookmark-content">
       <div class="bookmark-left">
@@ -17,9 +13,24 @@
           @hideOperateMenu="hideOperateMenu"
           ref="bookmarkRef"
         />
+        <div class="bookmark-btngrp">
+          <el-button type="primary" size="small">添加书签</el-button>
+          <el-button type="primary" size="small">新建目录</el-button>
+          <el-upload ref="upload" class="upload-file" action="" :limit="1" :show-file-list="false" :on-change="handleChangeFile" :auto-upload="false">
+            <template #trigger>
+              <el-button type="primary" size="small">导入书签</el-button>
+            </template>
+          </el-upload>
+        </div>
       </div>
       <div class="bookmark-right">
-        <RightContent :bookmarkData="selectData" :visiblePopover="visiblePopover" @nodeClick="handleNodeClick" @openOperateMenu="openOperateMenu" />
+        <RightContent
+          :bookmarkData="selectData"
+          :visiblePopover="visiblePopover"
+          @nodeClick="handleNodeClick"
+          @openOperateMenu="openOperateMenu"
+          @sortBookmark="saveSortBookmark"
+        />
       </div>
     </div>
     <el-popover
@@ -74,14 +85,14 @@ const menuList = ref([
 const globalProperties = getGlobalProperties()
 
 onMounted(() => {
-  const localData = localStorage.getItem('bookmarkData')
-  const chromeFile = localStorage.getItem('chromeFile')
-  if (localData) {
-    bookmarkData.value = JSON.parse(localData)
-  }
-  if (chromeFile) {
-    handleChromeFile(chromeFile)
-  }
+  // const localData = localStorage.getItem('bookmarkData')
+  // const chromeFile = localStorage.getItem('chromeFile')
+  // if (localData) {
+  //   bookmarkData.value = JSON.parse(localData)
+  // }
+  // if (chromeFile) {
+  //   handleChromeFile(chromeFile)
+  // }
   window.addEventListener('click', clickListener)
   getBookmark()
 })
@@ -148,13 +159,23 @@ const closeEditModal = () => {
 }
 
 // 保存修改数据
-const saveEditModal = async ({ form, editData, editType }) => {
-  console.log(form, editData, editType)
+const saveEditModal = async ({ form, editData, editType, selectId }) => {
   dialogVisible.value = false
-  if (form.name === editData.label && form.url === editData.url && form.icon === editData.icon) {
-    console.log('not modify')
-    return
+  switch (editType) {
+    case 'move':
+      moveBookmark({ editData, selectId })
+      break
+    case 'modify':
+      modifyBookmark({ form, editData })
+      break
+    default:
+      break
   }
+}
+
+// 修改书签
+const modifyBookmark = async ({ form, editData }) => {
+  if (form.name === editData.label && form.url === editData.url && form.icon === editData.icon) return
   try {
     editData.label = form.name
     const saveData = {
@@ -165,6 +186,21 @@ const saveEditModal = async ({ form, editData, editType }) => {
       folder: editData.folder,
     }
     const res = await globalProperties.$api.modifyBookmark({ bookmark: saveData })
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+// 移动书签
+const moveBookmark = async ({ editData, selectId }) => {
+  console.log('ssss', selectId, editData)
+  if (selectId === editData.parent || selectId === editData.id) return
+  try {
+    const moveData = {
+      id: editData.id,
+      folder: editData.folder,
+    }
+    const res = await globalProperties.$api.moveBookmark({ bookmark: moveData, parentID: selectId })
   } catch (e) {
     console.log(e)
   }
@@ -182,6 +218,36 @@ const removeBookmark = () => {
       await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
     })
     .catch(() => {})
+}
+
+// 保存排序数据
+const saveSortBookmark = async ({ sortMap, cancelSort }) => {
+  if (cancelSort) {
+    selectData.value.sort((a, b) => {
+      return a.sort - b.sort
+    })
+    return
+  }
+  try {
+    const res = await globalProperties.$api.sortBookmark({ sortMap })
+    if (res.status === 1) {
+      selectData.value.forEach((item) => {
+        item.sort = sortMap[item.id]
+      })
+      const temp = [].concat(bookmarkData.value)
+      bookmarkData.value = []
+      bookmarkData.value = temp
+    } else {
+      selectData.value.sort((a, b) => {
+        return a.sort - b.sort
+      })
+    }
+  } catch (e) {
+    console.log(e)
+    selectData.value.sort((a, b) => {
+      return a.sort - b.sort
+    })
+  }
 }
 
 // 提交书签导入数据
@@ -205,6 +271,7 @@ const getBookmark = async () => {
   }
 }
 
+// 处理书签列表为树结构
 const handleBookmarkData = (data) => {
   const dataMap = {}
   const treeData = []
@@ -245,8 +312,11 @@ const handleBookmarkData = (data) => {
       })
     }
   }
+  treeData.sort((a, b) => {
+    return a.sort - b.sort
+  })
   console.log('treeData', treeData, bookmarkData.value)
-  // bookmarkData.value = treeData
+  bookmarkData.value = treeData
 }
 </script>
 
@@ -260,14 +330,14 @@ const handleBookmarkData = (data) => {
     display: flex;
     align-items: center;
     border-radius: 6px 6px 0 0;
-    .upload-file {
-      // position: absolute;
-      // bottom: 0;
-      // width: 100%;
-      // height: 28px;
-      display: flex;
-      padding: 10px;
-      font-size: 14px;
+    .header-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .header-desc {
+      margin-left: 20px;
+      margin-top: 4px;
+      font-size: 16px;
     }
   }
   .bookmark-content {
@@ -280,6 +350,16 @@ const handleBookmarkData = (data) => {
     border-right: 1px solid #eee;
     position: relative;
     text-align: left;
+    .bookmark-btngrp {
+      height: 40px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid #eee;
+      button {
+        margin: 0;
+      }
+    }
   }
   .bookmark-right {
     background: #eee;

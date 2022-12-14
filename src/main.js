@@ -10,6 +10,7 @@ import SvgIcon from './components/SvgIcon.vue'
 import './assets/iconfont/iconfont.js'
 import './assets/js/flipclock'
 import api from '@/api/index'
+import { createPinia } from 'pinia'
 
 const app = createApp(App)
 
@@ -17,4 +18,4 @@ app.component('SvgIcon', SvgIcon)
 
 app.config.globalProperties.$api = api
 
-app.use(ElementPlus).use(router).mount('#app')
+app.use(createPinia()).use(ElementPlus).use(router).mount('#app')

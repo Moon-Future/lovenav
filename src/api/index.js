@@ -6,7 +6,9 @@ const params = [
 
   { name: 'importBookmark', url: '/api/bookmark/importBookmark/', method: 'post' },
   { name: 'modifyBookmark', url: '/api/bookmark/modifyBookmark/', method: 'post' },
+  { name: 'moveBookmark', url: '/api/bookmark/moveBookmark/', method: 'post' },
   { name: 'removeBookmark', url: '/api/bookmark/removeBookmark/', method: 'post' },
+  { name: 'sortBookmark', url: '/api/bookmark/sortBookmark/', method: 'post' },
   { name: 'getBookmark', url: '/api/bookmark/getBookmark/', method: 'post' },
   { name: 'addBookmark', url: '/api/bookmark/addBookmark/', method: 'post' },
 ]

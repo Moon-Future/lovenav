@@ -1,5 +1,10 @@
 <template>
   <div class="right-header" v-show="bookmarkData.length">
+    <el-button size="small" @click="startSort" v-if="!bookmarkStore.sortStatus">排序</el-button>
+    <template v-else>
+      <el-button type="danger" size="small" @click="cancelSort">取消</el-button>
+      <el-button type="primary" size="small" @click="saveSort">保存</el-button>
+    </template>
     <svg-icon class="icon-list" iconName="icon-liebiao" :color="listType === 'list' ? '#409eff' : '#8c8c8c'" @click="changeType('list')" />
     <svg-icon class="icon-list" iconName="icon-liebiao1" :color="listType === 'box' ? '#409eff' : '#8c8c8c'" @click="changeType('box')" />
   </div>
@@ -8,15 +13,14 @@
       class="row-list"
       :class="{ 'box-list': listType === 'box' }"
       :list="bookmarkData"
-      delay="200"
-      group="people"
-      item-key="id"
+      :disabled="!bookmarkStore.sortStatus"
+      :force-fallback="true"
+      handle=".icon-move"
       ghost-class="ghost-class"
       chosen-class="chosen-class"
-      :force-fallback="true"
       animation="300"
-      @start="drag = true"
-      @end="drag = false"
+      group="people"
+      item-key="id"
     >
       <template #item="{ element, index }">
         <div
@@ -30,12 +34,14 @@
           <img class="icon" :src="element.icon" alt="" v-else-if="element.icon" />
           <svg-icon class="icon" iconName="icon-website" v-else />
           <span class="label" :title="element.label">{{ element.label }}</span>
+          <svg-icon class="icon icon-move" iconName="icon-Move" v-if="bookmarkStore.sortStatus" />
           <svg-icon
             class="icon-more"
             :class="{ 'icon-more-show': moreShow === element.id && visiblePopover }"
             iconName="icon-more"
             :ref="(ref) => (refMap[element.id] = ref)"
             @click.stop="handleMore(element)"
+            v-else
           />
         </div>
         <a
@@ -49,12 +55,14 @@
           <img class="icon" :src="element.icon" alt="" v-else-if="element.icon" />
           <svg-icon class="icon" iconName="icon-website" v-else />
           <span class="label" :title="element.label">{{ element.label }}</span>
+          <svg-icon class="icon icon-move" iconName="icon-Move" v-if="bookmarkStore.sortStatus" />
           <svg-icon
             class="icon-more"
             :class="{ 'icon-more-show': moreShow === element.id && visiblePopover }"
             iconName="icon-more"
             :ref="(ref) => (refMap[element.id] = ref)"
             @click.stop.prevent="handleMore(element)"
+            v-else
           />
         </a>
       </template>
@@ -65,6 +73,8 @@
 <script setup>
 import { defineProps, ref, defineEmits } from 'vue'
 import draggable from 'vuedraggable'
+import { useBookmarkStore } from '@/stores/bookmark'
+import { getGlobalProperties } from '@/utils/index'
 
 const props = defineProps({
   bookmarkData: {
@@ -79,17 +89,30 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['nodeClick', 'openOperateMenu'])
+const emit = defineEmits(['nodeClick', 'openOperateMenu', 'sortBookmark'])
 
 const listType = ref('list')
 const refMap = ref({})
 const moreShow = ref('')
+const bookmarkStore = useBookmarkStore()
+const globalProperties = getGlobalProperties()
+
+console.log('useBookmarkStore', bookmarkStore.sortStatus)
 
 const changeType = (type) => {
   listType.value = type
 }
 
 const handleClick = (item) => {
+  console.log('xxxx', bookmarkStore.sortStatus)
+  if (bookmarkStore.sortStatus) {
+    globalProperties.$message({
+      message: '排序中...',
+      type: 'warning',
+      duration: 1500
+    })
+    return
+  }
   if (item.folder) {
     emit('nodeClick', { treeNode: item, type: 'expand' })
   }
@@ -100,13 +123,43 @@ const handleMore = (item) => {
   emit('openOperateMenu', { ref: refMap.value[item.id], data: item })
 }
 
-const onDargStart = () => {
-  console.log('onDargStart')
+// 开始排序
+const startSort = () => {
+  if (bookmarkStore.sortStatus) {
+    bookmarkStore.changeSortStatus(false)
+  } else {
+    bookmarkStore.changeSortStatus(true)
+  }
 }
 
-const onDargEnd = () => {
-  console.log('onDargEnd')
+// 取消排序
+const cancelSort = () => {
+  bookmarkStore.changeSortStatus(false)
+  emit('sortBookmark', { cancelSort: true })
 }
+
+// 保存排序
+const saveSort = () => {
+  bookmarkStore.changeSortStatus(false)
+  const data = props.bookmarkData.map((item) => {
+    return { id: item.id, sort: item.sort }
+  })
+  const sortData = [].concat(data)
+  sortData.sort((a, b) => {
+    return a.sort - b.sort
+  })
+  if (JSON.stringify(data) === JSON.stringify(sortData)) {
+    console.log('排序未变')
+    return
+  }
+  const sortMap = {}
+  data.forEach((item, index) => {
+    item.sort = index + 1
+    sortMap[item.id] = item.sort
+  })
+  emit('sortBookmark', { sortMap: sortMap })
+}
+
 </script>
 
 <style lang="less" scoped>
@@ -177,6 +230,13 @@ const onDargEnd = () => {
         &.icon-more-show {
           display: block;
         }
+      }
+      .icon-move {
+        position: absolute;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        cursor: move;
       }
       &:hover {
         background: #d9ecff;

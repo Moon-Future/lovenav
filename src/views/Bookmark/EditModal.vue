@@ -1,6 +1,6 @@
 <template>
   <el-dialog class="editmodal-container" :model-value="dialogVisible" :title="title" width="600px" @close="handleClose">
-    <el-form ref="formRef" :model="form" :rules="rules" v-if="editType !== 'move'">
+    <el-form ref="formRef" :model="form" :rules="rules" v-if="editType === 'modify'">
       <el-form-item label="名称" prop="name" :label-width="formLabelWidth">
         <el-input v-model="form.name" autocomplete="off" />
       </el-form-item>
@@ -12,8 +12,22 @@
         <img :src="form.icon" alt="" />
       </el-form-item>
     </el-form>
+    <div class="move-title" v-if="editType === 'move'">
+      将<span :title="editData.label">{{ editData.label }}</span
+      >移动到
+    </div>
     <el-scrollbar class="edit-scroll" v-if="editType === 'move' || editType === 'add'">
-      <el-tree class="bookmark-tree" node-key="id" :data="bookmarkData" :props="defaultProps" :expand-on-click-node="false" highlight-current>
+      <el-tree
+        class="bookmark-tree"
+        ref="editTree"
+        node-key="id"
+        :data="bookmarkData"
+        :props="defaultProps"
+        :expand-on-click-node="false"
+        :default-expanded-keys="expandedKeys"
+        @node-click="handleNodeClick"
+        highlight-current
+      >
         <template v-slot="{ node, data }">
           <div class="tree-node-item">
             <svg-icon iconName="icon-folder" v-if="data.folder" />
@@ -35,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch } from 'vue'
+import { ref, defineProps, defineEmits, watch, nextTick } from 'vue'
 
 const props = defineProps({
   dialogVisible: {
@@ -67,6 +81,9 @@ const formLabelWidth = '60px'
 const title = ref('')
 const form = ref({ name: '', url: '', icon: '', folder: '' })
 const formRef = ref()
+const expandedKeys = ref([])
+const editTree = ref()
+const selectId = ref('')
 
 const rules = {
   name: [
@@ -84,20 +101,32 @@ const handleClose = () => {
   emit('closeEditModal')
 }
 
+// 点击树节点
+const handleNodeClick = (treeNode) => {
+  console.log(treeNode)
+  selectId.value = treeNode.id
+}
+
 const handleSave = () => {
-  formRef.value.validate((valid, fields) => {
-    if (valid) {
-      emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType })
-    } else {
-      console.log('error submit!', fields)
-    }
-  })
+  if (props.editType === 'modify') {
+    formRef.value.validate((valid, fields) => {
+      if (valid) {
+        emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType })
+      } else {
+        console.log('error submit!', fields)
+      }
+    })
+  } else {
+    emit('saveEditModal', { editData: props.editData, editType: props.editType, selectId: selectId.value })
+  }
 }
 
 watch(
-  () => [props.editData, props.editType],
+  () => props.editType,
   (newValue) => {
-    const [editData, editType] = newValue
+    const editType = newValue
+    const editData = props.editData
+    if (editType === '') return
     form.value = { name: editData.label, url: editData.url || '', icon: editData.icon, folder: !!editData.folder }
     if (editData.folder) {
       title.value = editType === 'move' ? '移动文件夹' : '重命名文件夹'
@@ -105,6 +134,14 @@ watch(
       title.value = editType === 'add' ? '添加书签' : editType === 'move' ? '移动书签' : '修改书签'
     }
     formRef.value && formRef.value.resetFields()
+    console.log(editData)
+    if (editType === 'move' || editType === 'add') {
+      nextTick(() => {
+        expandedKeys.value = [editData.parent]
+        editTree.value.setCurrentKey(editData.parent)
+        selectId.value = editData.parent
+      })
+    }
   }
 )
 </script>
@@ -121,6 +158,19 @@ watch(
       height: 16px;
     }
   }
+  .move-title {
+    text-align: left;
+    display: flex;
+    span {
+      font-weight: bold;
+      max-width: 80%;
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin: 0 4px;
+    }
+  }
 }
 .edit-scroll {
   height: 300px;
@@ -129,6 +179,9 @@ watch(
     > .el-tree-node {
       display: inline-block;
       min-width: 100%;
+    }
+    .is-current > .el-tree-node__content {
+      background-color: #d9ecff;
     }
     .tree-node-item {
       display: flex;

@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 const tip = (msg, type = 'info') => {
   ElMessage({
     message: msg,
-    duration: 1000,
+    duration: 1500,
     type,
     center: true,
   })
