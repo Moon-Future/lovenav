@@ -21,7 +21,7 @@
         <template v-slot="{ node, data }">
           <div class="tree-node-item" :ref="(ref) => (refMap[data.id + '_left'] = ref)">
             <svg-icon :iconName="expandedKeys.includes(data.id) ? 'icon-opened_folder' : 'icon-folder'" v-if="data.folder" />
-            <img :src="data.icon" alt="" v-else-if="data.icon" />
+            <img class="tree-icon" :src="data.icon" alt="" v-else-if="data.icon" />
             <svg-icon iconName="icon-website" v-else />
             <span class="tree-label" :title="node.label" v-if="data.folder">{{ node.label }}</span>
             <a :href="data.url" class="tree-label" :title="node.label" target="_blank" rel="noopener noreferrer" v-else>{{ node.label }}</a>
@@ -139,6 +139,10 @@ defineExpose({
     .tree-node-item {
       display: flex;
       align-items: center;
+      .tree-icon {
+        width: 1em;
+        height: 1em;
+      }
     }
     .tree-label {
       margin-left: 8px;

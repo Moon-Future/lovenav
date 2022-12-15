@@ -14,8 +14,8 @@
           ref="bookmarkRef"
         />
         <div class="bookmark-btngrp">
-          <el-button type="primary" size="small">添加书签</el-button>
-          <el-button type="primary" size="small">新建目录</el-button>
+          <el-button type="primary" size="small" @click="addNewBookmark">添加书签</el-button>
+          <el-button type="primary" size="small" @click="addNewFolder">新建目录</el-button>
           <el-upload ref="upload" class="upload-file" action="" :limit="1" :show-file-list="false" :on-change="handleChangeFile" :auto-upload="false">
             <template #trigger>
               <el-button type="primary" size="small">导入书签</el-button>
@@ -69,7 +69,9 @@ import { getGlobalProperties } from '@/utils/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const bookmarkData = ref([])
+const bookmarkMap = ref({})
 const selectData = ref([])
+const selectDataParentId = ref('')
 const bookmarkRef = ref()
 const triggerRef = ref()
 const popoverRef = ref()
@@ -78,6 +80,8 @@ const dialogVisible = ref(false)
 const editData = ref({})
 const editType = ref('')
 const menuList = ref([
+  // { name: '添加书签', type: 'modify' },
+  // { name: '新建目录', type: 'modify' },
   { name: '修改', type: 'modify' },
   { name: '移动', type: 'move' },
   { name: '删除', type: 'remove' },
@@ -124,6 +128,7 @@ const handleChangeFile = (e) => {
 
 // 点击树结点
 const handleNodeClick = ({ treeNode, type }) => {
+  selectDataParentId.value = treeNode.parent
   selectData.value = treeNode.children || []
   bookmarkRef.value.handleExpandedKeys(treeNode.id, type)
 }
@@ -156,10 +161,11 @@ const clickOperateItem = (type) => {
 // 关闭修改弹出框
 const closeEditModal = () => {
   dialogVisible.value = false
+  editType.value = ''
 }
 
 // 保存修改数据
-const saveEditModal = async ({ form, editData, editType, selectId }) => {
+const saveEditModal = async ({ form, editData, editType, selectId, selectNode }) => {
   dialogVisible.value = false
   switch (editType) {
     case 'move':
@@ -167,6 +173,12 @@ const saveEditModal = async ({ form, editData, editType, selectId }) => {
       break
     case 'modify':
       modifyBookmark({ form, editData })
+      break
+    case 'addNewFolder':
+      saveNewNode({ editData, form, selectId, selectNode, folderStatus: true })
+      break
+    case 'addNewBookmark':
+      saveNewNode({ editData, form, selectId, selectNode, folderStatus: false })
       break
     default:
       break
@@ -193,7 +205,6 @@ const modifyBookmark = async ({ form, editData }) => {
 
 // 移动书签
 const moveBookmark = async ({ editData, selectId }) => {
-  console.log('ssss', selectId, editData)
   if (selectId === editData.parent || selectId === editData.id) return
   try {
     const moveData = {
@@ -201,6 +212,25 @@ const moveBookmark = async ({ editData, selectId }) => {
       folder: editData.folder,
     }
     const res = await globalProperties.$api.moveBookmark({ bookmark: moveData, parentID: selectId })
+    if (res.status === 1) {
+      const parent = editData.parent
+
+      editData.parent = selectId
+      bookmarkMap.value[selectId].children.push(editData)
+      if (editData.folder) {
+        bookmarkMap.value[selectId].folderChildren.push(editData)
+      }
+      
+      const children = parent ? bookmarkMap.value[parent].children : bookmarkData.value
+      const moveIndex = children.findIndex((item) => item.id === editData.id)
+      children.splice(moveIndex, 1)
+      if (moveData.folder && selectDataParentId.value === parent) {
+        selectData.value = []
+      }
+      const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
+      const moveFolderIndex = folderChildren.findIndex((item) => item.id === editData.id)
+      folderChildren.splice(moveFolderIndex, 1)
+    }
   } catch (e) {
     console.log(e)
   }
@@ -215,9 +245,66 @@ const removeBookmark = () => {
   })
     .then(async () => {
       const deleteData = editData.value
-      await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
+      const res = await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
+      if (res.status === 1) {
+        const parent = deleteData.parent
+        const children = parent ? bookmarkMap.value[parent].children : bookmarkData.value
+        const deleteIndex = children.findIndex((item) => item.id === deleteData.id)
+        children.splice(deleteIndex, 1)
+        if (deleteData.folder && selectDataParentId.value === parent) {
+          selectData.value = []
+        }
+        const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
+        const moveFolderIndex = folderChildren.findIndex((item) => item.id === deleteData.id)
+        folderChildren.splice(moveFolderIndex, 1)
+      }
     })
     .catch(() => {})
+}
+
+// 新建目录/书签保存
+const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
+  try {
+    const id = nanoid(10)
+    const name = folderStatus ? form.folderName : form.name
+    const res = await globalProperties.$api.saveNewNode({ parentID: selectId, id: id, name: name, url: form.url, icon: form.icon, folderStatus: folderStatus })
+    if (res.status === 1) {
+      const newNode = {
+        id,
+        label: name,
+        url: form.url,
+        icon: folderStatus ? '' : res.data.icon,
+        sort: res.data.sort,
+        parent: selectId,
+        folder: folderStatus
+      }
+      if (folderStatus) {
+        newNode.children = []
+        newNode.folderChildren = []
+      }
+      selectNode.children.push(newNode)
+      if (folderStatus) {
+        selectNode.folderChildren.push(newNode)
+      }
+      bookmarkMap.value[id] = newNode
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+// 新建目录
+const addNewFolder = () => {
+  editData.value = { parent: bookmarkData.value.length ? bookmarkData.value[0].id : '', folderName: '' }
+  dialogVisible.value = true
+  editType.value = 'addNewFolder'
+}
+
+// 新建书签
+const addNewBookmark = () => {
+  editData.value = { parent: bookmarkData.value.length ? bookmarkData.value[0].id : '' }
+  dialogVisible.value = true
+  editType.value = 'addNewBookmark'
 }
 
 // 保存排序数据
@@ -317,6 +404,7 @@ const handleBookmarkData = (data) => {
   })
   console.log('treeData', treeData, bookmarkData.value)
   bookmarkData.value = treeData
+  bookmarkMap.value = dataMap
 }
 </script>
 

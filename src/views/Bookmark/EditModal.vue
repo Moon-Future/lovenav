@@ -1,22 +1,26 @@
 <template>
   <el-dialog class="editmodal-container" :model-value="dialogVisible" :title="title" width="600px" @close="handleClose">
-    <el-form ref="formRef" :model="form" :rules="rules" v-if="editType === 'modify'">
-      <el-form-item label="名称" prop="name" :label-width="formLabelWidth">
+    <el-form ref="formRef" :model="form" :rules="rules" v-if="editType === 'modify' || editType === 'addNewFolder' || editType === 'addNewBookmark'">
+      <el-form-item class="form-url" label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder && editType !== 'addNewFolder'">
+        <el-input v-model="form.url" autocomplete="off" />
+        <el-button type="primary" size="small" @click="getWebInfo">获取标题和图标</el-button>
+      </el-form-item>
+      <el-form-item label="名称" prop="name" :label-width="formLabelWidth" v-if="editType !== 'addNewFolder'">
         <el-input v-model="form.name" autocomplete="off" />
       </el-form-item>
-      <el-form-item label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder">
-        <el-input v-model="form.url" autocomplete="off" />
-      </el-form-item>
-      <el-form-item class="form-icon" label="图标" :label-width="formLabelWidth" v-if="!editData.folder">
+      <!-- <el-form-item class="form-icon" label="图标" :label-width="formLabelWidth" v-if="!editData.folder && editType !== 'addNewFolder'">
         <el-input v-model="form.icon" autocomplete="off" />
         <img :src="form.icon" alt="" />
+      </el-form-item> -->
+      <el-form-item label="名称" prop="folderName" :label-width="formLabelWidth" v-if="editType === 'addNewFolder'">
+        <el-input v-model="form.folderName" autocomplete="off" />
       </el-form-item>
     </el-form>
     <div class="move-title" v-if="editType === 'move'">
       将<span :title="editData.label">{{ editData.label }}</span
       >移动到
     </div>
-    <el-scrollbar class="edit-scroll" v-if="editType === 'move' || editType === 'add'">
+    <el-scrollbar class="edit-scroll" v-if="editType === 'move' || editType === 'addNewFolder' || editType === 'addNewBookmark'">
       <el-tree
         class="bookmark-tree"
         ref="editTree"
@@ -41,6 +45,7 @@
     </el-scrollbar>
     <template #footer>
       <span class="dialog-footer">
+        <!-- <el-button class="btn-add" plain v-if="editType === 'move' || editType === 'add'">新建目录</el-button> -->
         <el-button @click="handleClose">取消</el-button>
         <el-button type="primary" @click="handleSave"> 保存 </el-button>
       </span>
@@ -50,6 +55,8 @@
 
 <script setup>
 import { ref, defineProps, defineEmits, watch, nextTick } from 'vue'
+// import axios from 'axios'
+import { getGlobalProperties } from '@/utils/index'
 
 const props = defineProps({
   dialogVisible: {
@@ -79,11 +86,13 @@ const defaultProps = {
 const emit = defineEmits(['closeEditModal', 'saveEditModal'])
 const formLabelWidth = '60px'
 const title = ref('')
-const form = ref({ name: '', url: '', icon: '', folder: '' })
+const form = ref({ name: '', url: '', icon: '', folderName: '' })
 const formRef = ref()
 const expandedKeys = ref([])
 const editTree = ref()
 const selectId = ref('')
+const selectNode = ref({})
+const globalProperties = getGlobalProperties()
 
 const rules = {
   name: [
@@ -92,6 +101,10 @@ const rules = {
   ],
   url: [
     { required: true, message: '请输入网址', trigger: 'blur' },
+    { min: 1, max: 1000, message: '请输入1~1000个字符', trigger: 'blur' },
+  ],
+  folderName: [
+    { required: true, message: '请输入名称', trigger: 'blur' },
     { min: 1, max: 1000, message: '请输入1~1000个字符', trigger: 'blur' },
   ],
 }
@@ -105,19 +118,40 @@ const handleClose = () => {
 const handleNodeClick = (treeNode) => {
   console.log(treeNode)
   selectId.value = treeNode.id
+  selectNode.value = treeNode
 }
 
 const handleSave = () => {
-  if (props.editType === 'modify') {
+  if (props.editType !== 'move') {
     formRef.value.validate((valid, fields) => {
       if (valid) {
-        emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType })
+        // 修改，新建目录
+        emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType, selectId: selectId.value, selectNode: selectNode.value })
       } else {
         console.log('error submit!', fields)
       }
     })
   } else {
+    // 移动
     emit('saveEditModal', { editData: props.editData, editType: props.editType, selectId: selectId.value })
+  }
+}
+
+// 获取网站标题和图标
+const getWebInfo = async () => {
+  if (form.value.url === '') return
+  try {
+    // const titleApi = 'https://api.vvhan.com/api/title?url='
+    // const iconApi = 'https://api.uomg.com/api/get.favicon?url='
+    // const titleRes = await axios.get(`${titleApi}${form.value.url}`)
+    // const iconRes = await axios.get(`${iconApi}${form.value.url}`)
+    const res = await globalProperties.$api.getWebsiteTitleAndIcon({ url: form.value.url })
+    if (res.status === 1) {
+      form.value.name = res.title
+      // form.value.icon = res.iconUrl
+    }
+  } catch (e) {
+    console.log(e)
   }
 }
 
@@ -127,19 +161,35 @@ watch(
     const editType = newValue
     const editData = props.editData
     if (editType === '') return
-    form.value = { name: editData.label, url: editData.url || '', icon: editData.icon, folder: !!editData.folder }
+    form.value = { name: editData.label, url: editData.url || '', icon: editData.icon, folder: !!editData.folder, folderName: editData.folderName }
     if (editData.folder) {
-      title.value = editType === 'move' ? '移动文件夹' : '重命名文件夹'
+      title.value = editType === 'move' ? '移动目录' : '重命名目录'
     } else {
-      title.value = editType === 'add' ? '添加书签' : editType === 'move' ? '移动书签' : '修改书签'
+      switch (editType) {
+        case 'addNewBookmark':
+          title.value = '添加书签'
+          break
+        case 'addNewFolder':
+          title.value = '新建目录'
+          break
+        case 'move':
+          title.value = '移动书签'
+          break
+        case 'modify':
+          title.value = '修改书签'
+          break
+        default:
+          break
+      }
     }
     formRef.value && formRef.value.resetFields()
     console.log(editData)
-    if (editType === 'move' || editType === 'add') {
+    if (editType === 'move' || editType === 'addNewFolder' || editType === 'addNewBookmark') {
       nextTick(() => {
         expandedKeys.value = [editData.parent]
         editTree.value.setCurrentKey(editData.parent)
         selectId.value = editData.parent
+        selectNode.value = editType === 'addNewFolder' || editType === 'addNewBookmark' ? props.bookmarkData[0] : {}
       })
     }
   }
@@ -148,6 +198,12 @@ watch(
 
 <style lang="less" scoped>
 .editmodal-container {
+  .form-url {
+    .el-input {
+      width: 70%;
+      margin-right: 10px;
+    }
+  }
   .form-icon {
     .el-input {
       width: 90%;
@@ -170,6 +226,10 @@ watch(
       text-overflow: ellipsis;
       margin: 0 4px;
     }
+  }
+  .btn-add {
+    position: absolute;
+    left: 20px;
   }
 }
 .edit-scroll {

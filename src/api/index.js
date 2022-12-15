@@ -11,6 +11,8 @@ const params = [
   { name: 'sortBookmark', url: '/api/bookmark/sortBookmark/', method: 'post' },
   { name: 'getBookmark', url: '/api/bookmark/getBookmark/', method: 'post' },
   { name: 'addBookmark', url: '/api/bookmark/addBookmark/', method: 'post' },
+  { name: 'saveNewNode', url: '/api/bookmark/saveNewNode/', method: 'post' },
+  { name: 'getWebsiteTitleAndIcon', url: '/api/bookmark/getWebsiteTitleAndIcon/', method: 'post' },
 ]
 
 const api = {}
