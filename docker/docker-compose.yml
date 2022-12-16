@@ -1,0 +1,17 @@
+version: '3'
+services:
+  home:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile-nginx
+    image: onebookmark:home
+    ports:
+      - 8885:80
+    volumes:
+      - ../dist:/www
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+    networks:
+      - onebookmark_networks
+    container_name: onebookmark_container
+networks:
+  onebookmark_networks:
