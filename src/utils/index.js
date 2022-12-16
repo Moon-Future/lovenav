@@ -9,6 +9,5 @@ export function getGlobalProperties() {
       },
     },
   } = getCurrentInstance()
-
   return { ...globalProperties }
 }

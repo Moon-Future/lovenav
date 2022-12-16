@@ -5,3 +5,12 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+
+## 网站标题获取API
+1. https://api.vvhan.com/api/title?url=
+2. https://tenapi.cn/title/?url=
+
+## 网站图标获取API
+1. https://api.vvhan.com/api/ico?url=
+2. https://tenapi.cn/ico/?url=
+3. https://api.uomg.com/api/get.favicon?url=

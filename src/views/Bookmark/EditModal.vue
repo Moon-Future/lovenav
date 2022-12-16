@@ -1,9 +1,9 @@
 <template>
   <el-dialog class="editmodal-container" :model-value="dialogVisible" :title="title" width="600px" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" v-if="editType === 'modify' || editType === 'addNewFolder' || editType === 'addNewBookmark'">
-      <el-form-item class="form-url" label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder && editType !== 'addNewFolder'">
+      <el-form-item :class="{ 'form-url': editType === 'addNewBookmark' }" label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder && editType !== 'addNewFolder'">
         <el-input v-model="form.url" autocomplete="off" />
-        <el-button type="primary" size="small" @click="getWebInfo">获取标题和图标</el-button>
+        <el-button type="primary" size="small" :loading="loading" @click="getWebInfo" v-if="editType === 'addNewBookmark'">获取标题</el-button>
       </el-form-item>
       <el-form-item label="名称" prop="name" :label-width="formLabelWidth" v-if="editType !== 'addNewFolder'">
         <el-input v-model="form.name" autocomplete="off" />
@@ -57,6 +57,7 @@
 import { ref, defineProps, defineEmits, watch, nextTick } from 'vue'
 // import axios from 'axios'
 import { getGlobalProperties } from '@/utils/index'
+import axios from 'axios'
 
 const props = defineProps({
   dialogVisible: {
@@ -86,13 +87,14 @@ const defaultProps = {
 const emit = defineEmits(['closeEditModal', 'saveEditModal'])
 const formLabelWidth = '60px'
 const title = ref('')
-const form = ref({ name: '', url: '', icon: '', folderName: '' })
+const form = ref({ name: '', url: '', icon: '', folderName: '', desc: '' })
 const formRef = ref()
 const expandedKeys = ref([])
 const editTree = ref()
 const selectId = ref('')
 const selectNode = ref({})
 const globalProperties = getGlobalProperties()
+const loading = ref(false)
 
 const rules = {
   name: [
@@ -110,13 +112,11 @@ const rules = {
 }
 
 const handleClose = () => {
-  console.log('handleClose')
   emit('closeEditModal')
 }
 
 // 点击树节点
 const handleNodeClick = (treeNode) => {
-  console.log(treeNode)
   selectId.value = treeNode.id
   selectNode.value = treeNode
 }
@@ -140,19 +140,23 @@ const handleSave = () => {
 // 获取网站标题和图标
 const getWebInfo = async () => {
   if (form.value.url === '') return
+  loading.value = true
   try {
-    // const titleApi = 'https://api.vvhan.com/api/title?url='
-    // const iconApi = 'https://api.uomg.com/api/get.favicon?url='
-    // const titleRes = await axios.get(`${titleApi}${form.value.url}`)
-    // const iconRes = await axios.get(`${iconApi}${form.value.url}`)
-    const res = await globalProperties.$api.getWebsiteTitleAndIcon({ url: form.value.url })
-    if (res.status === 1) {
-      form.value.name = res.title
-      // form.value.icon = res.iconUrl
+    const titleRes = await globalProperties.$api.getTitle({ url: form.value.url })
+    if (titleRes.code === 200) {
+      form.value.name = titleRes.data.title
+      form.value.desc = titleRes.data.description
+    } else {
+      globalProperties.$message({
+        message: '获取失败，请确认地址是否正确或自行输入',
+        type: 'warning',
+        duration: 1500,
+      })
     }
   } catch (e) {
     console.log(e)
   }
+  loading.value = false
 }
 
 watch(
@@ -183,7 +187,6 @@ watch(
       }
     }
     formRef.value && formRef.value.resetFields()
-    console.log(editData)
     if (editType === 'move' || editType === 'addNewFolder' || editType === 'addNewBookmark') {
       nextTick(() => {
         expandedKeys.value = [editData.parent]
@@ -200,7 +203,7 @@ watch(
 .editmodal-container {
   .form-url {
     .el-input {
-      width: 70%;
+      width: 80%;
       margin-right: 10px;
     }
   }

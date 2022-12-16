@@ -97,14 +97,11 @@ const moreShow = ref('')
 const bookmarkStore = useBookmarkStore()
 const globalProperties = getGlobalProperties()
 
-console.log('useBookmarkStore', bookmarkStore.sortStatus)
-
 const changeType = (type) => {
   listType.value = type
 }
 
 const handleClick = (item) => {
-  console.log('xxxx', bookmarkStore.sortStatus)
   if (bookmarkStore.sortStatus) {
     globalProperties.$message({
       message: '排序中...',

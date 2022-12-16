@@ -1,26 +1,37 @@
 <template>
   <div class="nav-container">
     <ul class="nav-list" @mouseleave="handleMouseleave">
-      <router-link :to="item.url" custom v-slot="{ navigate }" v-for="(item, index) in navList" :key="index">
+      <!-- <router-link :to="item.url" custom v-slot="{ navigate }" v-for="(item, index) in navList" :key="index">
         <li @click="navigate" :class="{ 'nav-item': true }" :title="item.name" @mousemove.stop="handleMousemove">
           <svg-icon :iconName="item.icon" />
+          <div class="active-line" v-if="activeUrl === item.url"></div>
         </li>
-      </router-link>
+      </router-link> -->
+      <li :class="{ 'nav-item': true }" :title="item.name" v-for="(item, index) in navList" :key="index" @mousemove.stop="handleMousemove" @click="navigateTo(item)">
+        <svg-icon :iconName="item.icon" />
+        <div class="active-line" v-if="activeUrl === item.url"></div>
+      </li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const navList = [
-  { name: '首页', url: '/', icon: 'icon-Home' },
+  // { name: '首页', url: '/home', icon: 'icon-Home' },
   { name: '书签栏', url: '/bookmark', icon: 'icon-mianxingshoucangjia' },
-  { name: '导航', url: '/nav', icon: 'icon-daohang' },
-  { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
-  { name: '设置', url: '/setting', icon: 'icon-setting2' },
-  { name: '用户', url: '/user', icon: 'icon-User' },
+  // { name: '导航', url: '/nav', icon: 'icon-daohang' },
+  // { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
+  // { name: '设置', url: '/setting', icon: 'icon-setting2' },
+  // { name: '用户', url: '/user', icon: 'icon-User' },
 ]
+const route = useRoute()
+const router = useRouter()
+const activeUrl = ref('')
+const userStore = useUserStore()
 
 const handleMousemove = (event) => {
   const tagName = event.srcElement.tagName
@@ -54,13 +65,29 @@ const resetScale = () => {
     li.style.setProperty('--scale', 1)
   })
 }
+
+const navigateTo = (item) => {
+  if (item.url === '/user') {
+    userStore.setDrawerShow(true)
+    return
+  }
+  router.push(item.url)
+}
+
+watch(
+  () => route.path,
+  (newValue) => {
+    activeUrl.value = newValue
+  },
+  { immediate: true }
+)
 </script>
 
 <style lang="less" scoped>
 .nav-container {
   position: absolute;
   z-index: 100;
-  bottom: 0;
+  bottom: 10px;
   left: 50%;
   transform: translate(-50%, 0);
   height: 60px;
@@ -77,7 +104,6 @@ const resetScale = () => {
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      // font-size: 40px;
       cursor: pointer;
       font-size: calc(40px * var(--scale));
       position: relative;
@@ -85,6 +111,14 @@ const resetScale = () => {
       transition: 500ms all ease-out;
       &.loading {
         animation: 1s loading ease-in infinite;
+      }
+      .active-line {
+        width: 50%;
+        height: 2px;
+        background: #409eff;
+        position: absolute;
+        bottom: 0;
+        border-radius: 4px;
       }
     }
   }

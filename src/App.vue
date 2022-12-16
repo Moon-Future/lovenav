@@ -3,10 +3,12 @@
   <el-button class="wallpaper-btn" type="primary" @click="change">切换壁纸</el-button>
   <router-view />
   <NavList />
+  <UserDrawer />
 </template>
 
 <script setup>
 import NavList from '@/components/NavList'
+import UserDrawer from '@/components/UserDrawer'
 import { ref } from 'vue'
 
 const random = ref(1)

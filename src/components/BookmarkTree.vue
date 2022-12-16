@@ -62,8 +62,10 @@ watch(
   () => props.bookmarkData,
   (newValue) => {
     nextTick(() => {
-      handleNodeExpand(newValue[0])
-      handleNodeClick(newValue[0])
+      if (newValue[0]) {
+        handleNodeExpand(newValue[0])
+        handleNodeClick(newValue[0])
+      }
     })
   }
 )

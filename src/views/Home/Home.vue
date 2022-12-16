@@ -5,7 +5,6 @@
 </template>
 
 <script setup>
-import BookmarksTree from '@/components/BookmarksTree'
 </script>
 
 <style lang="less" scoped>

@@ -1,5 +1,5 @@
 <template>
-  <div class="bookmark-container">
+  <div class="bookmark-container" v-loading="maskLoading">
     <div class="header-container">
       <span class="header-title">书签栏</span>
       <span class="header-desc">书签，只用一个就够了</span>
@@ -87,15 +87,13 @@ const menuList = ref([
   { name: '删除', type: 'remove' },
 ])
 const globalProperties = getGlobalProperties()
+const maskLoading = ref(false)
 
 onMounted(() => {
   // const localData = localStorage.getItem('bookmarkData')
   // const chromeFile = localStorage.getItem('chromeFile')
   // if (localData) {
   //   bookmarkData.value = JSON.parse(localData)
-  // }
-  // if (chromeFile) {
-  //   handleChromeFile(chromeFile)
   // }
   window.addEventListener('click', clickListener)
   getBookmark()
@@ -119,9 +117,8 @@ const handleChangeFile = (e) => {
   reader.readAsText(e.raw, 'utf8')
   reader.onload = (event) => {
     const { myBookmark, saveData } = handleChromeFile(event.target.result)
-    bookmarkData.value = myBookmark
-    localStorage.setItem('bookmarkData', JSON.stringify(myBookmark))
-    localStorage.setItem('chromeFile', event.target.result)
+    // bookmarkData.value = myBookmark
+    // localStorage.setItem('bookmarkData', JSON.stringify(myBookmark))
     saveImportData(saveData)
   }
 }
@@ -188,6 +185,7 @@ const saveEditModal = async ({ form, editData, editType, selectId, selectNode })
 // 修改书签
 const modifyBookmark = async ({ form, editData }) => {
   if (form.name === editData.label && form.url === editData.url && form.icon === editData.icon) return
+  maskLoading.value = true
   try {
     editData.label = form.name
     const saveData = {
@@ -201,11 +199,13 @@ const modifyBookmark = async ({ form, editData }) => {
   } catch (e) {
     console.log(e)
   }
+  maskLoading.value = false
 }
 
 // 移动书签
 const moveBookmark = async ({ editData, selectId }) => {
   if (selectId === editData.parent || selectId === editData.id) return
+  maskLoading.value = true
   try {
     const moveData = {
       id: editData.id,
@@ -220,7 +220,7 @@ const moveBookmark = async ({ editData, selectId }) => {
       if (editData.folder) {
         bookmarkMap.value[selectId].folderChildren.push(editData)
       }
-      
+
       const children = parent ? bookmarkMap.value[parent].children : bookmarkData.value
       const moveIndex = children.findIndex((item) => item.id === editData.id)
       children.splice(moveIndex, 1)
@@ -234,6 +234,7 @@ const moveBookmark = async ({ editData, selectId }) => {
   } catch (e) {
     console.log(e)
   }
+  maskLoading.value = false
 }
 
 // 删除书签
@@ -244,30 +245,45 @@ const removeBookmark = () => {
     type: 'warning',
   })
     .then(async () => {
-      const deleteData = editData.value
-      const res = await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
-      if (res.status === 1) {
-        const parent = deleteData.parent
-        const children = parent ? bookmarkMap.value[parent].children : bookmarkData.value
-        const deleteIndex = children.findIndex((item) => item.id === deleteData.id)
-        children.splice(deleteIndex, 1)
-        if (deleteData.folder && selectDataParentId.value === parent) {
-          selectData.value = []
+      maskLoading.value = true
+      try {
+        const deleteData = editData.value
+        const res = await globalProperties.$api.removeBookmark({ bookmark: { id: deleteData.id, folder: deleteData.folder } })
+        if (res.status === 1) {
+          const parent = deleteData.parent
+          const children = parent ? bookmarkMap.value[parent].children : bookmarkData.value
+          const deleteIndex = children.findIndex((item) => item.id === deleteData.id)
+          children.splice(deleteIndex, 1)
+          if (deleteData.folder && selectDataParentId.value === parent) {
+            selectData.value = []
+          }
+          const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
+          const moveFolderIndex = folderChildren.findIndex((item) => item.id === deleteData.id)
+          folderChildren.splice(moveFolderIndex, 1)
         }
-        const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
-        const moveFolderIndex = folderChildren.findIndex((item) => item.id === deleteData.id)
-        folderChildren.splice(moveFolderIndex, 1)
+      } catch (e) {
+        console.log(e)
       }
+      maskLoading.value = false
     })
     .catch(() => {})
 }
 
 // 新建目录/书签保存
 const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
+  maskLoading.value = true
   try {
     const id = nanoid(10)
     const name = folderStatus ? form.folderName : form.name
-    const res = await globalProperties.$api.saveNewNode({ parentID: selectId, id: id, name: name, url: form.url, icon: form.icon, folderStatus: folderStatus })
+    const res = await globalProperties.$api.addNewNode({
+      parentID: selectId,
+      id: id,
+      name: name,
+      url: form.url,
+      icon: form.icon,
+      desc: form.desc || '',
+      folderStatus: folderStatus,
+    })
     if (res.status === 1) {
       const newNode = {
         id,
@@ -276,7 +292,7 @@ const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
         icon: folderStatus ? '' : res.data.icon,
         sort: res.data.sort,
         parent: selectId,
-        folder: folderStatus
+        folder: folderStatus,
       }
       if (folderStatus) {
         newNode.children = []
@@ -291,6 +307,7 @@ const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
   } catch (e) {
     console.log(e)
   }
+  maskLoading.value = false
 }
 
 // 新建目录
@@ -315,6 +332,7 @@ const saveSortBookmark = async ({ sortMap, cancelSort }) => {
     })
     return
   }
+  maskLoading.value = true
   try {
     const res = await globalProperties.$api.sortBookmark({ sortMap })
     if (res.status === 1) {
@@ -335,23 +353,25 @@ const saveSortBookmark = async ({ sortMap, cancelSort }) => {
       return a.sort - b.sort
     })
   }
+  maskLoading.value = false
 }
 
 // 提交书签导入数据
 const saveImportData = async (data) => {
+  maskLoading.value = true
   try {
-    const res = await globalProperties.$api.importBookmark({ bookmarks: data })
-    console.log('res', res)
+    await globalProperties.$api.importBookmark({ bookmarks: data })
+    await getBookmark()
   } catch (e) {
     console.log(e)
   }
+  maskLoading.value = false
 }
 
 // 获取书签树
 const getBookmark = async () => {
   try {
     const res = await globalProperties.$api.getBookmark({ userId: '' })
-    console.log('getBookmark', res)
     handleBookmarkData(res.data)
   } catch (e) {
     console.log(e)
@@ -402,7 +422,7 @@ const handleBookmarkData = (data) => {
   treeData.sort((a, b) => {
     return a.sort - b.sort
   })
-  console.log('treeData', treeData, bookmarkData.value)
+  // console.log('treeData', treeData, bookmarkData.value)
   bookmarkData.value = treeData
   bookmarkMap.value = dataMap
 }
@@ -454,6 +474,10 @@ const handleBookmarkData = (data) => {
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+  :deep(.el-loading-mask) {
+    z-index: 2100;
+    opacity: 0.7;
   }
 }
 .menu-list {

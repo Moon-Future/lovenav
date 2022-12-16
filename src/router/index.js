@@ -4,12 +4,8 @@ import Layout from '@/layouts/Layout.vue'
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: () => import(/* webpackChunkName: "home" */ '@/views/Home/Home.vue'),
-  },
-  {
-    path: '/',
     component: Layout,
+    redirect: '/bookmark',
     children: [
       {
         path: '/bookmark',
@@ -17,6 +13,11 @@ const routes = [
         component: () => import(/* webpackChunkName: "bookmark" */ '@/views/Bookmark/Bookmark.vue'),
       },
     ],
+  },
+  {
+    path: '/home',
+    name: 'Home',
+    component: () => import(/* webpackChunkName: "home" */ '@/views/Home/Home.vue'),
   },
   {
     path: '/clock',
