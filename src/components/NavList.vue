@@ -21,12 +21,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const navList = [
-  // { name: '首页', url: '/home', icon: 'icon-Home' },
+  { name: '首页', url: '/home', icon: 'icon-Home' },
   { name: '书签栏', url: '/bookmark', icon: 'icon-mianxingshoucangjia' },
   // { name: '导航', url: '/nav', icon: 'icon-daohang' },
-  // { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
+  { name: '时钟', url: '/clock', icon: 'icon-shishishijian' },
   // { name: '设置', url: '/setting', icon: 'icon-setting2' },
-  // { name: '用户', url: '/user', icon: 'icon-User' },
+  { name: '用户', url: '/user', icon: 'icon-User' },
 ]
 const route = useRoute()
 const router = useRouter()

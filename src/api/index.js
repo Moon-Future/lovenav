@@ -19,15 +19,9 @@ const api = {}
 
 params.forEach((ele) => {
   api[ele.name] = (data) => {
-    const url = data.host === 'self' ? data.url : `${HOST}${data.url}`
-    return ele.method === 'get' ? axios.get(ele.url, { params: data }) : axios.post(ele.url, data)
+    const url = ele.host === 'self' ? ele.url : `${HOST}${ele.url}`
+    return ele.method === 'get' ? axios.get(url, { params: data }) : axios.post(url, data)
   }
-  // api.get = (url, data) => {
-  //   axios.get(url, { params: data })
-  // }
-  // api.post = (url, data) => {
-  //   axios.post(url, data)
-  // }
 })
 
 export default api
