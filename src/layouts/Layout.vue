@@ -61,7 +61,7 @@ const close = () => {
 @keyframes closeAni {
   0% {
     height: calc(100vh - 100px);
-    opacity: 1;
+    opacity: 0.9;
   }
   100% {
     height: 0;
@@ -77,7 +77,7 @@ const close = () => {
   }
   100% {
     height: calc(100vh - 100px);
-    opacity: 1;
+    opacity: 0.9;
   }
 }
 </style>

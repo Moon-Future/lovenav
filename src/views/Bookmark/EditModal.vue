@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, watch, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 // import axios from 'axios'
 import { getGlobalProperties } from '@/utils/index'
 import axios from 'axios'

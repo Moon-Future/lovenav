@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, watch, nextTick, defineExpose } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { getGlobalProperties } from '@/utils/index'
 

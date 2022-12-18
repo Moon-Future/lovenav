@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref, defineEmits } from 'vue'
+import { ref, } from 'vue'
 import draggable from 'vuedraggable'
 import { useBookmarkStore } from '@/stores/bookmark'
 import { getGlobalProperties } from '@/utils/index'
