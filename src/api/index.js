@@ -13,6 +13,8 @@ const params = [
   { name: 'getBookmark', url: '/api/bookmark/getBookmark/', method: 'post' },
   { name: 'addNewNode', url: '/api/bookmark/addNewNode/', method: 'post' },
   { name: 'getWebsiteTitleAndIcon', url: '/api/bookmark/getWebsiteTitleAndIcon/', method: 'post' },
+
+  { name: 'sendCode', url: '/api/user/sendCode/', method: 'post' },
 ]
 
 const api = {}

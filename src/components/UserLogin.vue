@@ -8,12 +8,12 @@
           <p class="desc">现在登陆你的书签账号，享受更多权限</p>
         </div>
         <template v-if="formStatus === 'login'">
-          <el-form class="login-form" :rules="rules" :model="formLogin">
+          <el-form class="login-form" :rules="rules" :model="formLogin" ref="ruleForm">
             <el-form-item prop="email">
               <el-input v-model="formLogin.email" size="large" placeholder="邮箱" />
             </el-form-item>
-            <el-form-item prop="passward">
-              <el-input v-model="formLogin.passward" size="large" placeholder="密码" />
+            <el-form-item prop="pwd">
+              <el-input v-model="formLogin.pwd" size="large" placeholder="密码" type="password" show-password />
             </el-form-item>
           </el-form>
           <el-button type="primary" size="large">登陆</el-button>
@@ -23,19 +23,19 @@
           </div>
         </template>
         <template v-else>
-          <el-form class="login-form" :rules="rules" :model="formLogin">
+          <el-form class="login-form" :rules="rules" :model="formLogin" ref="ruleForm">
             <el-form-item prop="email">
               <el-input v-model="formLogin.email" size="large" placeholder="邮箱" />
             </el-form-item>
             <el-form-item class="code-item" prop="code">
               <el-input class="code-input" v-model="formLogin.code" size="large" placeholder="验证码" />
-              <el-button type="primary" size="large">获取验证码</el-button>
+              <el-button type="primary" size="large" @click="sendCode">获取验证码</el-button>
             </el-form-item>
-            <el-form-item prop="passward">
-              <el-input v-model="formLogin.passward" size="large" placeholder="密码" type="password" show-password />
+            <el-form-item prop="pwd">
+              <el-input v-model="formLogin.pwd" size="large" placeholder="密码" type="password" show-password />
             </el-form-item>
-            <el-form-item prop="rePassward">
-              <el-input v-model="formLogin.rePassward" size="large" placeholder="重复密码" type="password" show-password />
+            <el-form-item prop="cpwd">
+              <el-input v-model="formLogin.cpwd" size="large" placeholder="重复密码" type="password" show-password />
             </el-form-item>
           </el-form>
           <el-button type="primary" size="large">注册</el-button>
@@ -49,32 +49,70 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { getGlobalProperties } from '@/utils/index'
 
 const userStore = useUserStore()
 const formStatus = ref('login') // login register
-const formLogin = ref({
+const formLogin = reactive({
   email: '',
   code: '',
-  passward: '',
-  rePassward: '',
+  pwd: '',
+  cpwd: '',
 })
+const ruleForm = ref()
+const globalProperties = getGlobalProperties()
+const mailReg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+
+const checkEmail = (rule, value, callback) => {
+  if (!value) {
+    return callback(new Error('请输入邮箱'))
+  }
+  if (mailReg.test(value)) {
+    callback()
+  } else {
+    callback(new Error('请输入正确的邮箱格式'))
+  }
+}
+
+const checkCpwd = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== formLogin.pwd) {
+    callback(new Error('两次输入密码不一致'))
+  } else {
+    callback()
+  }
+}
 
 const rules = {
-  email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
+  email: [{ validator: checkEmail, trigger: 'blur' }],
   code: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
-  passward: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  rePassward: [{ required: true, message: '请重复邮箱', trigger: 'blur' }],
+  pwd: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  cpwd: [{ validator: checkCpwd, trigger: 'blur' }],
 }
 
 const handleClose = () => {
   userStore.setLoginVisible(false)
+  ruleForm.value.resetFields()
+  ruleForm.value.clearValidate()
+  formStatus.value = 'login'
 }
 
 const changeFormStatus = (status) => {
   formStatus.value = status
+  ruleForm.value.resetFields()
+  ruleForm.value.clearValidate()
 }
+
+const sendCode = () => {
+  ruleForm.value.validateField('email', async (isValid) => {
+    if (!isValid) return
+    await globalProperties.$api.sendCode({ email: formLogin.email })
+  })
+}
+
 </script>
 
 <style lang="less" scoped>

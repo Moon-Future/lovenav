@@ -31,6 +31,7 @@ const change = () => {
   height: 100%;
   object-fit: cover;
   z-index: -1;
+  user-select: none;
 }
 .wallpaper-btn {
   position: absolute;
