@@ -1,8 +1,14 @@
 <template>
-  <el-dialog class="login-dialog" :model-value="userStore.loginVisible" @close="handleClose">
+  <el-dialog
+    class="login-dialog"
+    :model-value="userStore.loginVisible"
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    @close="handleClose"
+  >
     <div class="login-wrapper">
       <img class="left-img" src="../assets/image/login-left.jpg" alt="" />
-      <div class="right-form">
+      <div class="right-form" v-if="!userInfo">
         <div class="login-title">
           <p class="title">欢迎使用一个书签</p>
           <p class="desc">现在登陆你的书签账号，享受更多权限</p>
@@ -16,7 +22,7 @@
               <el-input v-model="formLogin.pwd" size="large" placeholder="密码" type="password" show-password />
             </el-form-item>
           </el-form>
-          <el-button type="primary" size="large">登陆</el-button>
+          <el-button type="primary" size="large" @click="submit">登陆</el-button>
           <div class="login-footer">
             <span @click="changeFormStatus('register')">还没有账号？现在注册</span>
             <span>忘记密码</span>
@@ -29,7 +35,8 @@
             </el-form-item>
             <el-form-item class="code-item" prop="code">
               <el-input class="code-input" v-model="formLogin.code" size="large" placeholder="验证码" />
-              <el-button type="primary" size="large" @click="sendCode">获取验证码</el-button>
+              <el-button type="primary" size="large" @click="sendCode" v-if="count < 0">获取验证码</el-button>
+              <el-button type="primary" size="large" disabled v-else>{{ count }}</el-button>
             </el-form-item>
             <el-form-item prop="pwd">
               <el-input v-model="formLogin.pwd" size="large" placeholder="密码" type="password" show-password />
@@ -38,7 +45,7 @@
               <el-input v-model="formLogin.cpwd" size="large" placeholder="重复密码" type="password" show-password />
             </el-form-item>
           </el-form>
-          <el-button type="primary" size="large">注册</el-button>
+          <el-button type="primary" size="large" @click="submit">注册</el-button>
           <div class="login-footer">
             <span @click="changeFormStatus('login')">已有账号？马上登陆</span>
           </div>
@@ -49,9 +56,14 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { getGlobalProperties } from '@/utils/index'
+import JSEncrypt from 'jsencrypt/bin/jsencrypt'
+import { publicKey } from '@/config'
+
+const $JSEncrypt = new JSEncrypt()
+$JSEncrypt.setPublicKey(publicKey) // 设置公钥
 
 const userStore = useUserStore()
 const formStatus = ref('login') // login register
@@ -64,6 +76,24 @@ const formLogin = reactive({
 const ruleForm = ref()
 const globalProperties = getGlobalProperties()
 const mailReg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+const count = ref(-1)
+let intervalTime = null
+
+const userInfo = computed(() => {
+  return userStore.userInfo
+})
+
+const countInterval = () => {
+  count.value = 60
+  intervalTime && clearInterval(intervalTime)
+  intervalTime = setInterval(() => {
+    count.value -= 1
+    if (count.value <= 0) {
+      clearInterval(intervalTime)
+      count.value = -1
+    }
+  }, 1000)
+}
 
 const checkEmail = (rule, value, callback) => {
   if (!value) {
@@ -95,9 +125,11 @@ const rules = {
 
 const handleClose = () => {
   userStore.setLoginVisible(false)
-  ruleForm.value.resetFields()
-  ruleForm.value.clearValidate()
-  formStatus.value = 'login'
+  if (!userInfo) {
+    ruleForm.value.resetFields()
+    ruleForm.value.clearValidate()
+    formStatus.value = 'login'
+  }
 }
 
 const changeFormStatus = (status) => {
@@ -110,9 +142,41 @@ const sendCode = () => {
   ruleForm.value.validateField('email', async (isValid) => {
     if (!isValid) return
     await globalProperties.$api.sendCode({ email: formLogin.email })
+    countInterval()
   })
 }
 
+const submit = () => {
+  ruleForm.value.validate(async (isValid) => {
+    if (!isValid) return
+    try {
+      const email = formLogin.email
+      const data = {
+        email: email,
+        pwd: $JSEncrypt.encrypt(formLogin.pwd),
+      }
+      if (formStatus.value === 'login') {
+        const res = await globalProperties.$api.login(data)
+        if (res.status === 1) {
+          userStore.setUserInfo(res.data)
+          userStore.setLoginVisible(false)
+          localStorage.setItem('token', res.token)
+        }
+      } else {
+        data.code = formLogin.code
+        data.cpwd = $JSEncrypt.encrypt(formLogin.cpwd)
+        const res = await globalProperties.$api.register(data)
+        if (res.status === 1) {
+          changeFormStatus('login')
+          clearInterval(intervalTime)
+          count.value = -1
+        }
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  })
+}
 </script>
 
 <style lang="less" scoped>

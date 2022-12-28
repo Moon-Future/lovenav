@@ -4,7 +4,8 @@ export const useUserStore = defineStore({
   id: 'user',
   state: () => ({
     drawerShow: false,
-    loginVisible: false
+    loginVisible: false,
+    userInfo: null
   }),
   actions: {
     setDrawerShow(status) {
@@ -12,6 +13,9 @@ export const useUserStore = defineStore({
     },
     setLoginVisible(status) {
       this.loginVisible = status
+    },
+    setUserInfo(userInfo) {
+      this.userInfo = userInfo
     }
   },
 })

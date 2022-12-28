@@ -82,8 +82,8 @@ instance.interceptors.request.use(
     // 每次发送请求之前判断 vuex 中是否存在 token
     // 如果存在，则统一在 http 请求的 header 都加上 token，这样后台根据 token 判断你的登录情况
     // 即使本地存在 token，也有可能 token 是过期的，所以在响应拦截器中要对返回状态进行判断
-    // const token = store.state.token
-    // token && (config.headers.Authorization = token)
+    const token = localStorage.getItem('token')
+    token && (config.headers.Authorization = token)
     return config
   },
   (error) => {
@@ -97,7 +97,7 @@ instance.interceptors.response.use(
     // 如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
     // 否则的话抛出错误
     if (res.status === 200) {
-      res.data.message && tip(res.data.message, 'success')
+      res.data.message && tip(res.data.message, res.data.status === 0 ? 'error' : 'success')
       return Promise.resolve(res.data)
     } else {
       return Promise.reject(res)

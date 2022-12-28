@@ -9,15 +9,37 @@
 <script setup>
 import NavList from '@/components/NavList'
 import UserDrawer from '@/components/UserDrawer'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import { getGlobalProperties } from '@/utils/index'
+import { useUserStore } from '@/stores/user'
 
 const random = ref(1)
 const src = ref('https://i.picsum.photos/id/588/1920/1080.jpg?hmac=XH1MBw8Tq8xKLCDBnV6B30zUdgSeOMArzz2QKLlPgp8')
+const globalProperties = getGlobalProperties()
+const userStore = useUserStore()
 
 const change = () => {
   random.value += 1
   src.value = `https://unsplash.it/1920/1080?random=${random.value}`
 }
+
+onMounted(async () => {
+  await getUserInfo()
+})
+
+const getUserInfo = async () =>{
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    const res = await globalProperties.$api.getUserInfo({ token })
+    if (res.status === 1) {
+      userStore.setUserInfo(res.data)
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 </script>
 
 <style scoped>

@@ -8,10 +8,10 @@
     </div>
     <el-scrollbar class="user-scrollbar">
       <div class="user-item login-item" @click="handleLoginClick">
-        <svg-icon class="login-icon" iconName="icon-shangsuo" />
+        <svg-icon class="login-icon" :iconName="userInfo ? 'icon-shuqian-' : 'icon-shangsuo'" />
         <div class="login-text">
-          <p class="login-title">登陆/注册</p>
-          <p class="login-desc">解锁更多实用功能</p>
+          <p class="login-title">{{ userInfo ? userInfo.nick_name || userInfo.email : '登陆/注册' }}</p>
+          <p class="login-desc" v-if="!userInfo">解锁更多实用功能</p>
         </div>
       </div>
     </el-scrollbar>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import UserLogin from '@/components/UserLogin'
 import { useUserStore } from '@/stores/user'
 
@@ -30,6 +30,10 @@ const tabs = ref([
   { name: '设置', icon: 'icon-setting', type: 'setting' },
 ])
 const tabType = ref('my')
+
+const userInfo = computed(() => {
+  return userStore.userInfo
+})
 
 const changeTab = (item) => {
   tabType.value = item.type

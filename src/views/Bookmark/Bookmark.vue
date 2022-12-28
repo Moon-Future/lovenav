@@ -62,11 +62,12 @@
 import BookmarkTree from '@/components/BookmarkTree'
 import RightContent from '@/views/Bookmark/RightContent'
 import EditModal from '@/views/Bookmark/EditModal'
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { nanoid } from 'nanoid'
 import { handleChromeFile } from '@/utils/handleData'
 import { getGlobalProperties } from '@/utils/index'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 
 const bookmarkData = ref([])
 const bookmarkMap = ref({})
@@ -88,13 +89,13 @@ const menuList = ref([
 ])
 const globalProperties = getGlobalProperties()
 const maskLoading = ref(false)
+const userStore = useUserStore()
+
+const userInfo = computed(() => {
+  return userStore.userInfo
+})
 
 onMounted(() => {
-  // const localData = localStorage.getItem('bookmarkData')
-  // const chromeFile = localStorage.getItem('chromeFile')
-  // if (localData) {
-  //   bookmarkData.value = JSON.parse(localData)
-  // }
   window.addEventListener('click', clickListener)
   getBookmark()
 })
@@ -163,7 +164,6 @@ const closeEditModal = () => {
 
 // 保存修改数据
 const saveEditModal = async ({ form, editData, editType, selectId, selectNode }) => {
-  dialogVisible.value = false
   switch (editType) {
     case 'move':
       moveBookmark({ editData, selectId })
@@ -196,6 +196,9 @@ const modifyBookmark = async ({ form, editData }) => {
       folder: editData.folder,
     }
     const res = await globalProperties.$api.modifyBookmark({ bookmark: saveData })
+    if (res.status === 1) {
+      dialogVisible.value = false
+    }
   } catch (e) {
     console.log(e)
   }
@@ -230,6 +233,8 @@ const moveBookmark = async ({ editData, selectId }) => {
       const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
       const moveFolderIndex = folderChildren.findIndex((item) => item.id === editData.id)
       folderChildren.splice(moveFolderIndex, 1)
+      
+      dialogVisible.value = false
     }
   } catch (e) {
     console.log(e)
@@ -271,8 +276,16 @@ const removeBookmark = () => {
 
 // 新建目录/书签保存
 const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
-  maskLoading.value = true
   try {
+    if (!folderStatus && !selectNode) {
+      globalProperties.$message({
+        message: '请先选择目录或新建目录',
+        type: 'warning',
+        duration: 1500,
+      })
+      return
+    }
+    maskLoading.value = true
     const id = nanoid(10)
     const name = folderStatus ? form.folderName : form.name
     const res = await globalProperties.$api.addNewNode({
@@ -298,11 +311,17 @@ const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
         newNode.children = []
         newNode.folderChildren = []
       }
-      selectNode.children.push(newNode)
-      if (folderStatus) {
-        selectNode.folderChildren.push(newNode)
+      if (selectNode) {
+        selectNode.children.push(newNode)
+        if (folderStatus) {
+          selectNode.folderChildren.push(newNode)
+        }
+      } else {
+        bookmarkData.value = [newNode]
       }
       bookmarkMap.value[id] = newNode
+
+      dialogVisible.value = false
     }
   } catch (e) {
     console.log(e)
@@ -371,7 +390,8 @@ const saveImportData = async (data) => {
 // 获取书签树
 const getBookmark = async () => {
   try {
-    const res = await globalProperties.$api.getBookmark({ userId: '' })
+    if (!userInfo) return
+    const res = await globalProperties.$api.getBookmark({ userId: userInfo.id })
     handleBookmarkData(res.data)
   } catch (e) {
     console.log(e)

@@ -21,6 +21,7 @@ export default defineConfig(async (command, mode) => {
       extensions: ['.js', '.vue']
     },
     server: {
+      // host: '0.0.0.0',
       proxy: {
         '/api': {
           target: 'http://localhost:5555/api',

@@ -15,6 +15,9 @@ const params = [
   { name: 'getWebsiteTitleAndIcon', url: '/api/bookmark/getWebsiteTitleAndIcon/', method: 'post' },
 
   { name: 'sendCode', url: '/api/user/sendCode/', method: 'post' },
+  { name: 'login', url: '/api/user/login/', method: 'post' },
+  { name: 'register', url: '/api/user/register/', method: 'post' },
+  { name: 'getUserInfo', url: '/api/user/getUserInfo/', method: 'post' },
 ]
 
 const api = {}
