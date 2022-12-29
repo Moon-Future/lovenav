@@ -12,6 +12,7 @@
         <div class="login-text">
           <p class="login-title">{{ userInfo ? userInfo.nick_name || userInfo.email : '登陆/注册' }}</p>
           <p class="login-desc" v-if="!userInfo">解锁更多实用功能</p>
+          <el-button type="primary" size="small" @click.stop="logout" v-if="userInfo">退出</el-button>
         </div>
       </div>
     </el-scrollbar>
@@ -41,6 +42,11 @@ const changeTab = (item) => {
 
 const handleLoginClick = () => {
   userStore.setLoginVisible(true)
+}
+
+const logout = () => {
+  userStore.setUserInfo(null)
+  localStorage.removeItem('token')
 }
 </script>
 

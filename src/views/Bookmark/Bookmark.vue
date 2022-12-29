@@ -18,7 +18,7 @@
           <el-button type="primary" size="small" @click="addNewFolder">新建目录</el-button>
           <el-upload ref="upload" class="upload-file" action="" :limit="1" :show-file-list="false" :on-change="handleChangeFile" :auto-upload="false">
             <template #trigger>
-              <el-button type="primary" size="small">导入书签</el-button>
+              <el-button type="primary" size="small" @click="importClick">导入书签</el-button>
             </template>
           </el-upload>
         </div>
@@ -62,7 +62,7 @@
 import BookmarkTree from '@/components/BookmarkTree'
 import RightContent from '@/views/Bookmark/RightContent'
 import EditModal from '@/views/Bookmark/EditModal'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
 import { handleChromeFile } from '@/utils/handleData'
 import { getGlobalProperties } from '@/utils/index'
@@ -89,11 +89,10 @@ const menuList = ref([
 ])
 const globalProperties = getGlobalProperties()
 const maskLoading = ref(false)
+const upload = ref()
 const userStore = useUserStore()
 
-const userInfo = computed(() => {
-  return userStore.userInfo
-})
+const userInfo = computed(() => userStore.userInfo)
 
 onMounted(() => {
   window.addEventListener('click', clickListener)
@@ -112,6 +111,14 @@ const clickListener = (e) => {
   hideOperateMenu()
 }
 
+const importClick = (e) => {
+  if (!userInfo.value) {
+    e.stopPropagation()
+    userStore.setLoginVisible(true)
+    return
+  }
+}
+
 // 导入书签
 const handleChangeFile = (e) => {
   const reader = new FileReader()
@@ -121,6 +128,7 @@ const handleChangeFile = (e) => {
     // bookmarkData.value = myBookmark
     // localStorage.setItem('bookmarkData', JSON.stringify(myBookmark))
     saveImportData(saveData)
+    upload.value.clearFiles()
   }
 }
 
@@ -233,7 +241,7 @@ const moveBookmark = async ({ editData, selectId }) => {
       const folderChildren = parent ? bookmarkMap.value[parent].folderChildren : bookmarkData.value
       const moveFolderIndex = folderChildren.findIndex((item) => item.id === editData.id)
       folderChildren.splice(moveFolderIndex, 1)
-      
+
       dialogVisible.value = false
     }
   } catch (e) {
@@ -331,6 +339,10 @@ const saveNewNode = async ({ form, selectId, selectNode, folderStatus }) => {
 
 // 新建目录
 const addNewFolder = () => {
+  if (!userInfo.value) {
+    userStore.setLoginVisible(true)
+    return
+  }
   editData.value = { parent: bookmarkData.value.length ? bookmarkData.value[0].id : '', folderName: '' }
   dialogVisible.value = true
   editType.value = 'addNewFolder'
@@ -338,6 +350,10 @@ const addNewFolder = () => {
 
 // 新建书签
 const addNewBookmark = () => {
+  if (!userInfo.value) {
+    userStore.setLoginVisible(true)
+    return
+  }
   editData.value = { parent: bookmarkData.value.length ? bookmarkData.value[0].id : '' }
   dialogVisible.value = true
   editType.value = 'addNewBookmark'
@@ -390,8 +406,8 @@ const saveImportData = async (data) => {
 // 获取书签树
 const getBookmark = async () => {
   try {
-    if (!userInfo) return
-    const res = await globalProperties.$api.getBookmark({ userId: userInfo.id })
+    if (!userInfo.value) return
+    const res = await globalProperties.$api.getBookmark({ userId: userInfo.value.id })
     handleBookmarkData(res.data)
   } catch (e) {
     console.log(e)
@@ -446,6 +462,15 @@ const handleBookmarkData = (data) => {
   bookmarkData.value = treeData
   bookmarkMap.value = dataMap
 }
+
+watch(
+  () => userInfo.value,
+  () => {
+    if (userInfo.value) {
+      getBookmark()
+    }
+  }
+)
 </script>
 
 <style lang="less" scoped>

@@ -39,9 +39,9 @@ const close = () => {
     background: #fff;
     box-shadow: 0 8px 32px 0 rgb(31 38 135 / 20%);
     opacity: 0.9;
-    animation: openAni 0.3s linear forwards;
+    animation: openAni 0.2s linear forwards;
     &.close {
-      animation: closeAni 0.3s linear forwards;
+      animation: closeAni 0.2s linear forwards;
     }
     .app-tools {
       position: absolute;

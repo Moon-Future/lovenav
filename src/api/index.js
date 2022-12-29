@@ -18,6 +18,8 @@ const params = [
   { name: 'login', url: '/api/user/login/', method: 'post' },
   { name: 'register', url: '/api/user/register/', method: 'post' },
   { name: 'getUserInfo', url: '/api/user/getUserInfo/', method: 'post' },
+  { name: 'getUserConfig', url: '/api/user/getUserConfig/', method: 'post' },
+  { name: 'setUserConfig', url: '/api/user/setUserConfig/', method: 'post' },
 ]
 
 const api = {}

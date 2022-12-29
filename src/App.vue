@@ -9,25 +9,46 @@
 <script setup>
 import NavList from '@/components/NavList'
 import UserDrawer from '@/components/UserDrawer'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getGlobalProperties } from '@/utils/index'
 import { useUserStore } from '@/stores/user'
+import axios from 'axios'
+import { userConfigType } from '@/config'
 
 const random = ref(1)
-const src = ref('https://i.picsum.photos/id/588/1920/1080.jpg?hmac=XH1MBw8Tq8xKLCDBnV6B30zUdgSeOMArzz2QKLlPgp8')
+const src = ref('')
 const globalProperties = getGlobalProperties()
 const userStore = useUserStore()
 
-const change = () => {
+const userInfo = computed(() => userStore.userInfo)
+
+const defaultSrc = [
+  'https://i.picsum.photos/id/869/1920/1080.jpg?hmac=1UWCkJAEV3_lc_GRqEcUXsRqTEng_1stESqAcXDA9ns',
+  'https://i.picsum.photos/id/588/1920/1080.jpg?hmac=XH1MBw8Tq8xKLCDBnV6B30zUdgSeOMArzz2QKLlPgp8',
+]
+
+const change = async () => {
   random.value += 1
-  src.value = `https://unsplash.it/1920/1080?random=${random.value}`
+  const res = await axios.get(`https://unsplash.it/1920/1080?random=${random.value}`)
+  const url = res.request.responseURL
+  src.value = url
+  try {
+    await globalProperties.$api.setUserConfig({
+      configMap: {
+        [userConfigType.wallpaper.id]: url,
+      },
+    })
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 onMounted(async () => {
   await getUserInfo()
+  await getUserConfig()
 })
 
-const getUserInfo = async () =>{
+const getUserInfo = async () => {
   try {
     const token = localStorage.getItem('token')
     if (!token) return
@@ -40,6 +61,21 @@ const getUserInfo = async () =>{
   }
 }
 
+const getUserConfig = async () => {
+  try {
+    if (!userInfo.value) return
+    const res = await globalProperties.$api.getUserConfig({ configTypeList: [userConfigType.wallpaper.id] })
+    const userConfig = res.data
+    userStore.setUserConfig(userConfig)
+    if (userConfig[userConfigType.wallpaper.id]) {
+      src.value = userConfig[userConfigType.wallpaper.id].config_value
+    } else {
+      src.value = defaultSrc[0]
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
 </script>
 
 <style scoped>

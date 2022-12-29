@@ -45,18 +45,25 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import dayjs from 'dayjs'
+import { useUserStore } from '@/stores/user'
+import { userConfigType } from '@/config'
+import { getGlobalProperties } from '@/utils/index'
 
 const currentDay = ref(dayjs().format('YYYY年MM月DD日'))
 const dayMark = ref('')
 let clockIns = null
 let isFullScreen = ref(false)
+const userStore = useUserStore()
+const globalProperties = getGlobalProperties()
 
 const settting = reactive({
   format24: true,
   hasSecond: true,
 })
+
+const userConfig = computed(() => userStore.userConfig)
 
 onMounted(() => {
   isFullScreen.value = getFullScreenStatus()

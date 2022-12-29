@@ -79,9 +79,7 @@ const mailReg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
 const count = ref(-1)
 let intervalTime = null
 
-const userInfo = computed(() => {
-  return userStore.userInfo
-})
+const userInfo = computed(() => userStore.userInfo)
 
 const countInterval = () => {
   count.value = 60
@@ -125,7 +123,7 @@ const rules = {
 
 const handleClose = () => {
   userStore.setLoginVisible(false)
-  if (!userInfo) {
+  if (!userInfo.value) {
     ruleForm.value.resetFields()
     ruleForm.value.clearValidate()
     formStatus.value = 'login'
@@ -161,6 +159,9 @@ const submit = () => {
           userStore.setUserInfo(res.data)
           userStore.setLoginVisible(false)
           localStorage.setItem('token', res.token)
+          ruleForm.value.resetFields()
+          ruleForm.value.clearValidate()
+          formStatus.value = 'login'
         }
       } else {
         data.code = formLogin.code

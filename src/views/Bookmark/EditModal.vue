@@ -1,7 +1,13 @@
 <template>
   <el-dialog class="editmodal-container" :model-value="dialogVisible" :title="title" width="600px" @close="handleClose">
     <el-form ref="formRef" :model="form" :rules="rules" v-if="editType === 'modify' || editType === 'addNewFolder' || editType === 'addNewBookmark'">
-      <el-form-item :class="{ 'form-url': editType === 'addNewBookmark' }" label="网址" prop="url" :label-width="formLabelWidth" v-if="!editData.folder && editType !== 'addNewFolder'">
+      <el-form-item
+        :class="{ 'form-url': editType === 'addNewBookmark' }"
+        label="网址"
+        prop="url"
+        :label-width="formLabelWidth"
+        v-if="!editData.folder && editType !== 'addNewFolder'"
+      >
         <el-input v-model="form.url" autocomplete="off" />
         <el-button type="primary" size="small" :loading="loading" @click="getWebInfo" v-if="editType === 'addNewBookmark'">获取标题</el-button>
       </el-form-item>
@@ -126,7 +132,13 @@ const handleSave = () => {
     formRef.value.validate((valid, fields) => {
       if (valid) {
         // 修改，新建目录
-        emit('saveEditModal', { form: form.value, editData: props.editData, editType: props.editType, selectId: selectId.value, selectNode: selectNode.value })
+        emit('saveEditModal', {
+          form: form.value,
+          editData: props.editData,
+          editType: props.editType,
+          selectId: selectId.value,
+          selectNode: selectNode.value,
+        })
       } else {
         console.log('error submit!', fields)
       }
@@ -258,6 +270,13 @@ watch(
 }
 </style>
 <style lang="less">
+.editmodal-container {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .el-dialog__header {
   text-align: left;
   font-weight: bold;
