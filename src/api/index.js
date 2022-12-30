@@ -1,5 +1,5 @@
 import axios from './axios'
-const HOST = import.meta.env.MODE === 'development' ? '' : 'https://wxproject.cl8023.com'
+const HOST = import.meta.env.MODE === 'development' ? '' : 'https://yigeshuqian.cl8023.com'
 
 const params = [
   { name: 'getWallparper', url: 'https://unsplash.it/1920/1080?random', method: 'get', host: 'self' },

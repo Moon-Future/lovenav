@@ -14,3 +14,9 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 1. https://api.vvhan.com/api/ico?url=
 2. https://tenapi.cn/ico/?url=
 3. https://api.uomg.com/api/get.favicon?url=
+
+## 删除 Container
+docker rm -f id
+
+## 运行 docker-compose
+docker-compose up -d --build
