@@ -33,11 +33,7 @@ const change = async () => {
   const url = res.request.responseURL
   src.value = url
   try {
-    await globalProperties.$api.setUserConfig({
-      configMap: {
-        [userConfigType.wallpaper.id]: url,
-      },
-    })
+    await globalProperties.$api.setUserConfig({ type: userConfigType.wallpaper.id, value: url})
   } catch (e) {
     console.log(e)
   }
@@ -63,12 +59,19 @@ const getUserInfo = async () => {
 
 const getUserConfig = async () => {
   try {
-    if (!userInfo.value) return
-    const res = await globalProperties.$api.getUserConfig({ configTypeList: [userConfigType.wallpaper.id] })
+    if (!userInfo.value) {
+      src.value = defaultSrc[0]
+      return
+    }
+    const configTypeList = []
+    for (let key in userConfigType) {
+      configTypeList.push(userConfigType[key].id)
+    }
+    const res = await globalProperties.$api.getUserConfig({ configTypeList })
     const userConfig = res.data
     userStore.setUserConfig(userConfig)
     if (userConfig[userConfigType.wallpaper.id]) {
-      src.value = userConfig[userConfigType.wallpaper.id].config_value
+      src.value = userConfig[userConfigType.wallpaper.id]
     } else {
       src.value = defaultSrc[0]
     }

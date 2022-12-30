@@ -13,6 +13,8 @@
           <p class="login-title">{{ userInfo ? userInfo.nick_name || userInfo.email : '登陆/注册' }}</p>
           <p class="login-desc" v-if="!userInfo">解锁更多实用功能</p>
           <el-button type="primary" size="small" @click.stop="logout" v-if="userInfo">退出</el-button>
+          
+          <el-button type="primary" size="small" @click.stop="refreshIcon" v-if="userInfo && userInfo.email === '236338364@qq.com'">刷新图标数据</el-button>
         </div>
       </div>
     </el-scrollbar>
@@ -24,6 +26,7 @@
 import { computed, ref } from 'vue'
 import UserLogin from '@/components/UserLogin'
 import { useUserStore } from '@/stores/user'
+import { getGlobalProperties } from '@/utils/index'
 
 const userStore = useUserStore()
 const tabs = ref([
@@ -31,6 +34,7 @@ const tabs = ref([
   { name: '设置', icon: 'icon-setting', type: 'setting' },
 ])
 const tabType = ref('my')
+const globalProperties = getGlobalProperties()
 
 const userInfo = computed(() => {
   return userStore.userInfo
@@ -47,6 +51,14 @@ const handleLoginClick = () => {
 const logout = () => {
   userStore.setUserInfo(null)
   localStorage.removeItem('token')
+}
+
+const refreshIcon = async () => {
+  try {
+    await globalProperties.$api.webIconTask()
+  } catch (e) {
+    console.log(e)
+  }
 }
 </script>
 

@@ -20,6 +20,9 @@ const params = [
   { name: 'getUserInfo', url: '/api/user/getUserInfo/', method: 'post' },
   { name: 'getUserConfig', url: '/api/user/getUserConfig/', method: 'post' },
   { name: 'setUserConfig', url: '/api/user/setUserConfig/', method: 'post' },
+
+  
+  { name: 'webIconTask', url: '/api/task/webIconTask/', method: 'post' },
 ]
 
 const api = {}

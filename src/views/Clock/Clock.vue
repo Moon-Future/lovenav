@@ -11,25 +11,25 @@
           <div class="tools-item">
             <span>时钟进制</span>
             <el-switch
-              v-model="settting.format24"
+              :model-value="settting.format24"
               class="ml-2"
               inline-prompt
               style="--el-switch-on-color: #409eff; --el-switch-off-color: #67c23a"
               active-text="24"
               inactive-text="12"
-              @change="settingChange"
+              @change="settingChange('format24')"
             />
           </div>
           <div class="tools-item">
             <span>是否显示秒</span>
             <el-switch
-              v-model="settting.hasSecond"
+              :model-value="settting.hasSecond"
               class="ml-2"
               inline-prompt
               style="--el-switch-on-color: #409eff; --el-switch-off-color: #67c23a"
               active-text="是"
               inactive-text="否"
-              @change="settingChange"
+              @change="settingChange('hasSecond')"
             />
           </div>
         </div>
@@ -58,12 +58,19 @@ let isFullScreen = ref(false)
 const userStore = useUserStore()
 const globalProperties = getGlobalProperties()
 
-const settting = reactive({
-  format24: true,
-  hasSecond: true,
-})
+// const settting = reactive({
+//   format24: true,
+//   hasSecond: true,
+// })
 
-const userConfig = computed(() => userStore.userConfig)
+const settting = computed(() => {
+  const config = {
+    [userConfigType.format24.id]: true,
+    [userConfigType.hasSecond.id]: true,
+    ...userStore.userConfig
+  }
+  return config
+})
 
 onMounted(() => {
   isFullScreen.value = getFullScreenStatus()
@@ -119,15 +126,36 @@ const getDayMark = () => {
   dayMark.value = day
 }
 
-const settingChange = () => {
-  console.log('settting', settting, clockIns)
+const settingChange = (type) => {
+  const userConfig = userStore.userConfig
+  let value = ''
+  switch (type) {
+    case 'format24':
+      userConfig.format24 = !settting.value.format24
+      value = userConfig.format24
+      break
+    case 'hasSecond':
+      userConfig.hasSecond = !settting.value.hasSecond
+      value = userConfig.hasSecond
+      break
+  }
+  setUserConfig(type, value)
+  userStore.setUserConfig(userConfig)
   setClock()
 }
 
 const setClock = () => {
-  clockIns.loadClockFace(settting.format24 ? 'TwentyFourHourClock' : 'TwelveHourClock', {
-    showSeconds: settting.hasSecond,
+  clockIns.loadClockFace(settting.value.format24 ? 'TwentyFourHourClock' : 'TwelveHourClock', {
+    showSeconds: settting.value.hasSecond,
   })
+}
+
+const setUserConfig = async (type, value) => {
+  try {
+    await globalProperties.$api.setUserConfig({ type, value })
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 const handleFullScreen = () => {
