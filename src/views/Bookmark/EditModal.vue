@@ -155,15 +155,9 @@ const getWebInfo = async () => {
   loading.value = true
   try {
     const titleRes = await globalProperties.$api.getTitle({ url: form.value.url })
-    if (titleRes.code === 200) {
+    if (titleRes.status === 1) {
       form.value.name = titleRes.data.title
       form.value.desc = titleRes.data.description
-    } else {
-      globalProperties.$message({
-        message: '获取失败，请确认地址是否正确或自行输入',
-        type: 'warning',
-        duration: 1500,
-      })
     }
   } catch (e) {
     console.log(e)

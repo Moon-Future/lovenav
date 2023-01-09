@@ -3,8 +3,9 @@ const HOST = import.meta.env.MODE === 'development' ? '' : 'https://yigeshuqian.
 
 const params = [
   { name: 'getWallparper', url: 'https://unsplash.it/1920/1080?random', method: 'get', host: 'self' },
-  { name: 'getTitle', url: 'https://tenapi.cn/title/', method: 'get', host: 'self' },
+  // { name: 'getTitle', url: 'https://tenapi.cn/title/', method: 'get', host: 'self' },
 
+  { name: 'getTitle', url: '/api/bookmark/getTitle/', method: 'post' },
   { name: 'importBookmark', url: '/api/bookmark/importBookmark/', method: 'post' },
   { name: 'modifyBookmark', url: '/api/bookmark/modifyBookmark/', method: 'post' },
   { name: 'moveBookmark', url: '/api/bookmark/moveBookmark/', method: 'post' },
