@@ -104,7 +104,7 @@ onUnmounted(() => {
 })
 
 const clickListener = (e) => {
-  const path = e.path
+  const path = e.path || []
   for (let i = 0, len = path.length; i < len; i++) {
     if (path[i] === popoverRef.value.popperRef.contentRef) return
   }

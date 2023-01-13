@@ -75,8 +75,27 @@ const settting = computed(() => {
 onMounted(() => {
   isFullScreen.value = getFullScreenStatus()
   initClock()
-  getDayMark()
+  console.log('onMounted')
+
+  document.addEventListener('visibilitychange', pageVisibilityChange)
+  // Safari
+  window.addEventListener('pageshow', pageShow)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', pageVisibilityChange)
+  // Safari
+  window.removeEventListener('pageshow', pageShow)
+})
+
+const pageVisibilityChange = () => {
+  document.hidden ? clockIns.stop() : initClock()
+}
+
+const pageShow = () => {
+  clockIns.stop()
+  initClock()
+}
 
 const initClock = () => {
   /**
@@ -94,8 +113,20 @@ const initClock = () => {
   clockIns = $('.clock').FlipClock({
     clockFace: 'TwentyFourHourClock',
     language: 'chinese',
+    callbacks: {
+      interval: handleInterval
+    }
   })
   setClock()
+  getDayMark()
+}
+
+const handleInterval = () => {
+  // 在timer的每次时间间隔触发回调
+  const dateStr = dayjs().format('YYYY年MM月DD日')
+  if (dateStr === currentDay.value) return
+  currentDay.value = dateStr
+  getDayMark()
 }
 
 const getDayMark = () => {
